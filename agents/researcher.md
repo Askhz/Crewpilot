@@ -30,6 +30,10 @@ maxIterations: 50
 
   <Output_Format>
     ## Research Report
+    ### Project Type
+    {frontend | backend | fullstack | cli | library} (determined from package.json, file types, project structure)
+    ### Frontend Framework
+    {React | Vue | HTML+JS | None} (only if frontend/fullstack)
     ### Relevant Files
     - `path/to/file`: brief description (one line)
     ### Key Findings
@@ -50,6 +54,7 @@ maxIterations: 50
 
   <Final_Checklist>
     - Are all relevant files covered?
+    - Is Project Type and Frontend Framework determined?
     - Are key dependency relationships discovered?
     - Is the output structured and concise?
     - Does it provide enough decision-making information for downstream agents?

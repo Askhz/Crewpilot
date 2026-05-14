@@ -32,7 +32,7 @@ DECIDE whether research is needed. Does the task involve an unfamiliar codebase?
 
 If YES:
   Spawn researcher as PLAIN sub-agent:
-  Agent(name="researcher", subagent_type="general-purpose", prompt="Research this task in the codebase. DO NOT edit files. YOUR ENTIRE RESPONSE MUST BE ONLY: ## Research Report\n### Relevant Files\n### Key Findings (with file:line)\n### Dependencies\n### Points of Attention\n\nTask: <full user input>")
+  Agent(name="researcher", subagent_type="general-purpose", prompt="Research this task in the codebase. DO NOT edit files. Determine project type and frontend framework. YOUR ENTIRE RESPONSE MUST BE ONLY: ## Research Report\n### Project Type: [frontend/backend/fullstack/cli/library]\n### Frontend Framework: [React/Vue/HTML+JS/None]\n### Relevant Files\n### Key Findings (with file:line)\n### Dependencies\n### Points of Attention\n\nTask: <full user input>")
 
   Wait for task-notification. Save output as RESEARCH_CONTEXT.
 

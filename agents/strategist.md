@@ -72,7 +72,7 @@ maxIterations: 30
 
     **Scenario: Unknown/Other**
     Steps: researcher → architect → coder → reviewer(spec-compliance)
-    Dependencies: chain. Be conservative — include review at minimum.
+    Dependencies: chain. Be conservative — include review at minimum. Add inspector if project has frontend UI.
 
     Adjust based on task specifics:
     - If the task is small (1-2 files): skip writer, maybe skip separate architect (researcher can cover)
@@ -80,7 +80,13 @@ maxIterations: 30
     - If no code is produced: skip coder, tester, reviewer
     - If only documentation: use researcher + writer
     - If tests already exist and task is small: merge tester into coder step
-    - If project has a frontend (web UI): add inspector after coder for UI inspection → fix → re-inspect loop. Inspector sends ISSUE signals to coder, coder fixes and replies, inspector re-verifies. Loop terminates after 3 rounds or all clear.
+
+    INSPECTOR MANDATE — EVERY FRONTEND PROJECT GETS AN INSPECTOR:
+    - If the RESEARCH CONTEXT or task description indicates the project has a web frontend (React, Vue, HTML, CSS, browser UI, web pages), you MUST include inspector in the workflow — regardless of scenario type.
+    - Place inspector after coder and before reviewer(spec-compliance): ... → coder → inspector(loop with coder until clean, max 3 rounds) → reviewer(spec-compliance) → ...
+    - Inspector uses agent-browser to check UI layout, content, interactions, console errors, and network requests. It sends ISSUE signals to coder, coder fixes and replies, inspector re-verifies.
+    - This is NOT optional for frontend projects. Skipping it means UI bugs will reach the user.
+    - If the RESEARCH CONTEXT does NOT mention a frontend, skip inspector.
 
     PARALLEL EXECUTION RULE:
     - When multiple steps share the same "Depends On" (or all start from "—"), they CAN run in parallel.

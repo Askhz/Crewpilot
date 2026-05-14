@@ -50,6 +50,8 @@ tier: thorough
 
     YOUR ENTIRE RESPONSE MUST BE ONLY:
     ## Research Report
+    ### Project Type: [frontend / backend / fullstack / cli / library] (MANDATORY — determine from package.json, file types, project structure)
+    ### Frontend Framework: [React / Vue / HTML+JS / None] (MANDATORY if project has any UI)
     ### Relevant Files (path + one-line description)
     ### Key Findings (with file:line references)
     ### Dependencies
