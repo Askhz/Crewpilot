@@ -1,0 +1,49 @@
+# Crewpilot global configuration
+version: 2
+
+# IntentGate intent classification
+intentGate:
+  categories:
+    - id: implement
+      keywords: [build, implement, create, add]
+      routing: complex
+    - id: fix
+      keywords: [fix, bug, repair, debug]
+      routing: complex
+    - id: explain
+      keywords: [explain, what, how, describe]
+      routing: simple
+    - id: review
+      keywords: [review, check, inspect, audit]
+      routing: complex
+    - id: refactor
+      keywords: [refactor, optimize, improve, restructure]
+      routing: complex
+    - id: other
+      keywords: [list, show, find, query, search]
+      routing: simple
+  turnLocalReset: true
+
+# Keyword priority detection
+keywords:
+  - pattern: "cp-plan|crewpilot-plan"
+    skill: crewpilot-plan
+    priority: 10
+  - pattern: "crewpilot"
+    skill: crewpilot-run
+    priority: 5
+
+# Model tier mapping
+modelMapping:
+  - level: 1
+    tier: low
+    model: claude-haiku-4-5-20251001
+  - level: 2
+    tier: standard
+    model: claude-sonnet-4-6
+  - level: 3
+    tier: thorough
+    model: claude-opus-4-7
+  - level: 4
+    tier: thorough
+    model: claude-opus-4-7

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tmp
+.claude/
+.claude-plugin/
+.cospec/
+.crew/
+.crewpilot/
+csc.exe

@@ -1,0 +1,11 @@
+{
+  "name": "crewpilot",
+  "version": "1.0.0",
+  "description": "Team-based multi-agent orchestration for Claude Code via TeamCreate",
+  "type": "module",
+  "bin": {
+    "crewpilot": "./scripts/install.mjs"
+  },
+  "keywords": ["claude-code", "multi-agent", "team", "orchestration"],
+  "license": "MIT"
+}
