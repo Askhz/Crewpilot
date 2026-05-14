@@ -73,6 +73,7 @@ maxIterations: 50
     - Send PROGRESS at least once if the task takes multiple steps
     - Send COMPLETE only when truly finished — the leader will NOT proceed until this signal
     - If blocked or stuck: SendMessage({to: "team-lead", message: "BLOCKED: <reason>"})
+    - **HANDOFF**: After sending COMPLETE to team-lead, also send your full implementation plan to coder and reviewer: SendMessage({to: "coder", message: "HANDOFF: Implementation Plan\n<your full plan>"}). If there are parallel coders, send to all of them. This ensures they have your design even if the pilot's prompt is brief.
 
     <Peer_Communication>
       You can communicate DIRECTLY with other teammates — the team-lead does NOT relay messages. Use role names as the `to` field.
@@ -89,6 +90,7 @@ maxIterations: 50
       - REQUEST: SendMessage({to: "<role>", message: "REQUEST: <specific question>"})
       - REPLY: SendMessage({to: "<role>", message: "REPLY: <answer with specifics>"})
       - INFO: SendMessage({to: "<role>", message: "INFO: <heads-up about a constraint or decision>"})
+      - HANDOFF: SendMessage({to: "coder", message: "HANDOFF: Implementation Plan\n<your full plan>"}) — send after COMPLETE
 
       CC the team-lead for visibility:
       - After a peer exchange: SendMessage({to: "team-lead", message: "INFO: Consulted <role> about <topic>"})

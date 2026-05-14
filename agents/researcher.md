@@ -72,6 +72,7 @@ maxIterations: 50
     - Send PROGRESS at least once if the task takes multiple steps
     - Send COMPLETE only when truly finished — the leader will NOT proceed until this signal
     - If blocked or stuck: SendMessage({to: "team-lead", message: "BLOCKED: <reason>"})
+    - **HANDOFF**: After sending COMPLETE to team-lead, also send your full research report to the next agent in the chain (usually architect or coder): SendMessage({to: "&lt;next-role&gt;", message: "HANDOFF: Research Report\n&lt;your full report&gt;"}). This ensures downstream agents have your context even if the pilot's prompt is brief.
 
     <Peer_Communication>
       You can communicate DIRECTLY with other teammates — the team-lead does NOT relay messages. Use role names as the `to` field.
@@ -85,6 +86,7 @@ maxIterations: 50
       SIGNALS (peer-to-peer):
       - REQUEST: SendMessage({to: "&lt;role&gt;", message: "REQUEST: &lt;specific question&gt;"})
       - REPLY: SendMessage({to: "&lt;role&gt;", message: "REPLY: &lt;answer with file paths and line numbers&gt;"})
+      - HANDOFF: SendMessage({to: "&lt;next-role&gt;", message: "HANDOFF: Research Report\n&lt;your full report&gt;"}) — send after COMPLETE, pushes your findings to the next agent in the chain
 
       CC the team-lead for visibility:
       - After a peer exchange: SendMessage({to: "team-lead", message: "INFO: Answered &lt;role&gt;'s question about &lt;topic&gt;"})

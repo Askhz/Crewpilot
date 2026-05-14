@@ -62,6 +62,7 @@ maxIterations: 50
     - Send PROGRESS at least once if the task takes multiple steps
     - Send COMPLETE only when truly finished — the leader will NOT proceed until this signal
     - If blocked or stuck: SendMessage({to: "team-lead", message: "BLOCKED: <reason>"})
+    - **HANDOFF**: After sending COMPLETE to team-lead, also send your changes summary to tester and reviewer: SendMessage({to: "tester", message: "HANDOFF: Changes Summary\n### Files Changed\n- file.ts: what changed\n### Verification\n- Build: pass/fail\n### Notes\n- ..."}). This ensures they know exactly what to test and review.
 
     <Peer_Communication>
       You can communicate DIRECTLY with other teammates — the team-lead does NOT relay messages. Use role names as the `to` field.
@@ -79,6 +80,7 @@ maxIterations: 50
       SIGNALS (peer-to-peer):
       - REQUEST: SendMessage({to: "<role>", message: "REQUEST: <specific question>"})
       - REPLY: SendMessage({to: "<role>", message: "REPLY: <answer with file paths>"})
+      - HANDOFF: SendMessage({to: "tester", message: "HANDOFF: Changes Summary\n<files changed + verification>"}) — send after COMPLETE
       - ISSUE_RESPONSE: When inspector sends an ISSUE, fix it and reply: SendMessage({to: "inspector", message: "REPLY: Fixed <issue description> — <files changed>"})
 
       CC the team-lead for visibility:

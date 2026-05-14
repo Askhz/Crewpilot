@@ -214,7 +214,7 @@ tier: thorough
     Loop:
     1. TaskList() — find first task with status="pending" AND all blockedBy tasks completed
     2. TaskUpdate(taskId, status="in_progress", owner="<role>")
-    3. Agent(team_name, name="<role>", subagent_type="<type>", prompt="<self-contained task. Include: 'SIGNAL PROTOCOL: PROGRESS for milestones, COMPLETE when done. You can SendMessage directly to other teammates by role name for coordination — the team-lead does not relay. Leader only routes signals, not verifies work.'")
+    3. Agent(team_name, name="<role>", subagent_type="<type>", prompt="<self-contained task with ALL handoff context from completed upstream tasks. NEVER spawn without upstream COMPLETE output. Include: 'SIGNAL PROTOCOL: PROGRESS for milestones, COMPLETE when done. After COMPLETE, send HANDOFF to downstream teammates with your full output. You can SendMessage directly to other teammates by role name for coordination.'")
     4. WAIT. Monitor incoming messages for signals:
        - COMPLETE → TaskUpdate(status="completed") → next task
        - BLOCKED → SendMessage to help unblock, or mark failed → next task
@@ -250,16 +250,17 @@ tier: thorough
   </Agent_Type_Mapping>
 
   <Prompt_Writing_Guide>
-    Every teammate prompt must be self-contained:
+    Every teammate prompt must be self-contained and include ALL upstream context:
     - What to do (specific, actionable — from the Task description)
-    - Context from completed tasks (key findings, file paths, decisions from prior steps)
+    - **Handoff context from completed tasks** (MANDATORY): Include the full COMPLETE output of every task this one depends on. E.g., coder's prompt MUST include architect's plan, tester's prompt MUST include coder's changes summary.
     - Constraints (what NOT to do)
     - Expected output format
     - Peer communication hint: mention which teammates are also working and may be contacted
 
-    Good: "Implement login in src/auth/login.ts. Validate email/password, return JWT on success, throw AuthError on failure. Schema: src/db/schema.ts (users table). ONLY modify files in src/auth/. You can SendMessage to 'researcher' for codebase context and 'tester' for test coordination."
+    Good: "Implement login in src/auth/login.ts. Architect's plan: POST /api/auth/login accepts {email, password}, validates against users table (schema: src/db/schema.ts), returns JWT on success. Files to modify: src/auth/login.ts, src/auth/middleware.ts. ONLY modify files in src/auth/. You can SendMessage to 'researcher' for codebase context and 'tester' for test coordination."
     Bad: "Based on your findings, fix the login."
-  </Prompt_Writing_Guide>
+
+    NEVER spawn a teammate without including what their upstream dependencies produced. If architect designed a plan, coder MUST see it. If researcher found key files, architect MUST see them.
 
   <Failure_Modes_To_Avoid>
     - Wrapping pilot logic inside Agent() — the main session IS the pilot

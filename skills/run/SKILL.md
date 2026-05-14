@@ -126,8 +126,8 @@ Loop until all tasks are done:
    - architect → Plan
    - coder/reviewer/tester/inspector/writer → general-purpose
 3. TaskUpdate(taskId, status: "in_progress", owner: "<role_name>")
-4. Spawn the teammate:
-   Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<task description + context from completed tasks. Include peer comm hint: 'You can SendMessage directly to other teammates (<list active teammate names>) for coordination. The team-lead does NOT relay messages.'>")
+4. Spawn the teammate (MUST include full handoff context from all completed upstream tasks):
+   Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<task description + upstream COMPLETE output: architect's plan for coder, coder's changes for tester, etc. Include: 'After COMPLETE, send HANDOFF to downstream teammates with your full output.' Include peer comm hint.>")
 5. Wait for task-notification (automatic)
 6. TaskUpdate(taskId, status: "completed")
 7. Repeat from step 1
