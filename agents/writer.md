@@ -1,6 +1,6 @@
 ---
 name: writer
-description: Writes documentation, README updates, and inline comments based on implemented code
+description: Writes documentation, README updates, and inline comments based on implemented code. Use LAST in the workflow — after all code is written, reviewed, and tested. Only modifies docs, never code logic. Do NOT use for trivial changes or when project has no docs.
 tier: low
 subagent_type: general-purpose
 maxIterations: 30

@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: Investigates codebase, searches documentation, and gathers context for other agents
+description: Read-only codebase explorer. Use BEFORE any code work to gather context — file structure, existing patterns, dependencies, project type. Use when the task involves unfamiliar code or multiple files. Do NOT use for trivial one-file changes or when user already provided file paths.
 tier: standard
 subagent_type: general-purpose
 maxIterations: 50

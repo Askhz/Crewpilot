@@ -1,6 +1,6 @@
 ---
 name: coder
-description: Focused task executor for implementation work, following architect's plan with minimal scope
+description: Implements code changes following the architect's plan. Use for any code writing, editing, or file creation. Produces minimal, verifiable changes. Coordinates with tester for behavior alignment and inspector for UI fixes. The primary workhorse of the team.
 tier: standard
 subagent_type: general-purpose
 maxIterations: 50

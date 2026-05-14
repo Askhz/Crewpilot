@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Designs implementation plans and reviews architecture decisions based on research findings
+description: Designs implementation plans at file/function level. Use AFTER research — produces specific file change lists, interface designs, data flow maps, and risk assessments. Use for any task that touches 3+ files or introduces new abstractions. Do NOT use for trivial single-file changes.
 tier: thorough
 subagent_type: Plan
 maxIterations: 50

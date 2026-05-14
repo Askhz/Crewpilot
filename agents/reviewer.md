@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Two-stage code reviewer — spec-compliance checks requirement conformance, code-quality checks implementation excellence
+description: Two-stage code reviewer. spec-compliance pass: checks code against requirements (use for every feature). code-quality pass: checks style, error handling, performance, maintainability (use for 3+ file changes). Run as TWO separate tasks for complex work. Read-only, never edits code. Do NOT use for trivial changes.
 tier: standard
 subagent_type: general-purpose
 maxIterations: 30

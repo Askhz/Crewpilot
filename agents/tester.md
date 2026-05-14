@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Writes and runs tests to verify implementation correctness and edge case coverage
+description: Writes and runs automated tests. Use AFTER coder finishes to verify correctness, edge cases, and error paths. Only modifies test files — never touches implementation code. Coordinates with coder when test failures are ambiguous. Do NOT use when tests already exist and code change is trivial.
 tier: standard
 subagent_type: general-purpose
 maxIterations: 50

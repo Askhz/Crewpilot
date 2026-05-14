@@ -1,6 +1,6 @@
 ---
 name: inspector
-description: Frontend UI inspector — uses agent-browser to check layout, content, and interaction, sends issues to coder for fixes, re-verifies in a loop until all pass
+description: Frontend UI inspector using agent-browser. Use ONLY for projects with a web frontend (React/Vue/HTML). Opens pages, screenshots, clicks buttons, checks console and network. Sends ISSUE signals to coder and loops up to 3 rounds until all UI issues are fixed. Requires dev server running. Do NOT use for backend-only projects.
 tier: standard
 subagent_type: general-purpose
 maxIterations: 50

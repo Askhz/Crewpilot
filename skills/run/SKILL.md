@@ -50,31 +50,51 @@ If NO (purely planning, review-only, user already provided specifics, trivial ta
 </Step_0_Research>
 
 <Step_1_Strategize>
-Spawn the strategist as a PLAIN sub-agent (no team_name). Pass the research context:
+YOU design the workflow. Do NOT spawn another agent for this — you ARE the strategist.
 
-Agent(name="strategist", subagent_type="general-purpose", prompt="Analyze this task and design the optimal multi-agent workflow. DO NOT read source code or explore the codebase — use the provided research context.
+Analyze the task using the research context (if available) and classify it into a scenario. Design the optimal multi-agent workflow with these rules:
 
-Task: <full user input>
+- Feature Development: researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer (chain)
+- Bug Fix: researcher → architect → coder → tester (chain, +reviewer if >2 files)
+- Code Review: researcher → reviewer(spec) → reviewer(quality) (parallel after research)
+- Refactoring: researcher → architect → coder → tester → reviewer(quality) (chain)
+- Unknown/Other: researcher → architect → coder → reviewer(spec) (chain, conservative)
 
-RESEARCH CONTEXT:
-<RESEARCH_CONTEXT>
+INSPECTOR MANDATE: If RESEARCH_CONTEXT shows a frontend project, add inspector after coder.
+If Phase 0 already researched, skip researcher step in the workflow.
 
 PARALLEL: max 5 agents at once.
 
-YOUR ENTIRE RESPONSE MUST BE ONLY:
-## Task Analysis (Type, Complexity, Summary)
-## Workflow Plan (| Step | Agent | Task Description | Depends On |)
+Produce your workflow design:
+
+## Task Analysis
+- **Type**: {Feature | BugFix | Review | Refactor | Other}
+- **Complexity**: {Simple | Medium | Complex}
+- **Frontend**: {Yes — <framework> | No}
+- **Summary**: One sentence
+
+## Workflow Plan
+| Step | Agent | Task Description | Depends On |
+|------|-------|-----------------|------------|
+
 ## Review Strategy
-## Missing Agents (agents you need that don't exist, with suggested name/subagent_type/allowedTools/role. Write 'None' if all exist)
-## Key Considerations")
+- spec-compliance: {needed / not needed}, focus on {what}
+- code-quality: {needed / not needed}, focus on {what}
 
-The strategist returns a structured table via task-notification. Parse it immediately.
-
-IMPORTANT: If ## Missing Agents is not empty/None, create those agent files. Write agents/{name}.md for each, following YAML frontmatter + Agent_Prompt XML format.
+## Missing Agents
+(Write "None" if all needed agents exist)
 </Step_1_Strategize>
 
+<Step_1_5_UserApproval>
+MANDATORY — get user approval BEFORE creating the team.
+
+Present the workflow plan via AskUserQuestion with an "Approve" and "Revise" option. Use the preview field to show the full workflow (agent chain, dependencies, review strategy). If multiple valid approaches exist, offer them as distinct choices.
+
+Wait for approval before proceeding. If rejected, revise and re-present. NEVER skip this step.
+</Step_1_5_UserApproval>
+
 <Step_2_Create_Team>
-Now create the team based on the strategist's plan:
+Now create the team based on your workflow plan:
 
 TeamCreate(team_name="crew-<short-task-slug>", description="<user task summary>", agent_type="pilot")
 
@@ -82,7 +102,7 @@ Generate a short descriptive team_name (e.g. "crew-add-login", "crew-fix-auth").
 </Step_2_Create_Team>
 
 <Step_3_Plan_Tasks>
-Parse the strategist's table. Create a TaskCreate for each step:
+Parse your workflow table. Create a TaskCreate for each step:
 
 For each row in the table:
 - subject: "<Agent role>: <short description>"
@@ -130,8 +150,7 @@ Never wrap these steps inside Agent() or Task() — they run in the main session
 </Step_5_Shutdown_And_Report>
 
 <Escalation>
-  - Researcher fails: if essential context is missing, report to user. If optional, proceed to strategist with note that research was unavailable.
+  - Researcher fails: if essential, report to user. If optional, proceed with note that research was unavailable.
   - TeamCreate fails: check if another team is already active, report error
-  - Strategist returns unusable plan: retry with clearer task description or re-run research
   - Teammate repeatedly fails: mark task failed, report to user, continue if possible
 </Escalation>
