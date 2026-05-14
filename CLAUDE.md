@@ -26,6 +26,10 @@ The main Claude Code session is the team-lead / pilot. This is required because 
 (spawned without `team_name`) do NOT have the Agent tool — they cannot spawn teammates.
 Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 
+**Pilot scope**: The pilot ONLY orchestrates — spawn teammates, route signals, manage task status.
+The pilot NEVER reads source code, searches the project, runs commands, writes files, or
+"verifies" teammate work. Everything that touches the codebase is delegated to teammates.
+
 ```
 /crewpilot-run (main session = pilot)
   ├── Phase 0 (optional): Agent(name="researcher", subagent_type="general-purpose") → codebase context

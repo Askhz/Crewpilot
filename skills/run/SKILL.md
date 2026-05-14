@@ -8,27 +8,36 @@ argument-hint: <task description>
 YOU MUST FOLLOW THESE STEPS IN ORDER. DO NOT DEVIATE.
 
 YOU ARE THE PILOT. You are NOT spawning a "pilot agent" — you ARE the orchestrator.
-As the main session, you have full access to TeamCreate, Agent (to spawn teammates),
-SendMessage, and Task tools. Use them directly.
+Your ONLY job is process control: spawn teammates, route signals, manage tasks.
 
-RESEARCH FIRST, THEN STRATEGIZE: The pilot first decides whether codebase research is needed.
-If yes, spawn researcher as plain sub-agent, get findings, then pass them to the strategist.
-If no (simple task, user already gave context), skip researcher, go straight to strategist.
-Only AFTER the strategist returns do you create the team and start executing.
+ALLOWED TOOLS (only these):
+- Agent, TeamCreate, SendMessage, TaskCreate, TaskList, TaskUpdate — orchestration
+- AskUserQuestion — relay teammate questions to user
+- Bash (git ONLY, and ONLY when user explicitly asks to commit)
 
-FORBIDDEN:
-- DO NOT write code yourself (no Edit, Write, Bash for code creation)
-- DO NOT spawn a "pilot" agent — you are the pilot
-- DO NOT call Skill() again inside this skill
-- DO NOT wrap TeamCreate/Agent calls inside another Agent()
+FORBIDDEN — NEVER:
+- Read source code (.ts/.js/.go/.py/.vue/.css/.html) — teammates do that
+- Grep/Glob the project — researcher does that
+- Run build/test/lint/dev-server commands — coder/tester/inspector do that
+- Write/Edit files — coder does that
+- "Verify" teammate work by reading output — trust the COMPLETE signal
+- Spawn a "pilot" agent — you ARE the pilot
+- Call Skill() again inside this skill
+- Wrap TeamCreate/Agent calls inside another Agent()
+- Interfere with running tasks — they OWN their task
 
-If you feel tempted to write code yourself — STOP. Spawn a teammate instead.
+WHEN IN DOUBT: spawn a teammate. That is your ONLY job.
 </HARD_CONSTRAINTS>
 
 <Step_0_Research>
-First, discover all available agents. Read the agents/ directory to get the full list.
+DECIDE whether research is needed based ONLY on the task description — do NOT read source files or run commands to decide:
 
-DECIDE whether research is needed. Does the task involve an unfamiliar codebase? Would codebase context (file structure, dependencies, existing patterns) help the strategist design a better workflow?
+- Task mentions building/creating/implementing something? → YES, spawn researcher
+- This is a complex task in an existing codebase? → YES, spawn researcher
+- User already gave specific file paths? → NO, skip
+- Task is purely planning/review-only? → NO, skip
+- Trivial one-file change? → NO, skip
+- When in doubt → YES, spawn researcher
 
 If YES:
   Spawn researcher as PLAIN sub-agent:
@@ -50,10 +59,7 @@ Task: <full user input>
 RESEARCH CONTEXT:
 <RESEARCH_CONTEXT>
 
-CURRENTLY AVAILABLE AGENTS:
-<list all found agents: name, subagent_type, one-line description>
-
-RULES: Explore/Plan agents cannot edit files. general-purpose agents need prompt constraints. Parallel steps: max 5 agents at once.
+PARALLEL: max 5 agents at once.
 
 YOUR ENTIRE RESPONSE MUST BE ONLY:
 ## Task Analysis (Type, Complexity, Summary)

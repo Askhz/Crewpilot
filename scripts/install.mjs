@@ -65,7 +65,8 @@ async function main() {
 
   // Step 1: Copy plugin files
   console.log('Step 1/4: Copying plugin files...');
-  const VERSION = '0.2.0';
+  const pkg = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf-8'));
+  const VERSION = pkg.version;
   const marketplaceDir = join(PLUGINS_DIR, 'marketplaces', MARKETPLACE);
   const cacheDir = join(PLUGINS_DIR, 'cache', MARKETPLACE, PLUGIN_NAME, VERSION);
   ensureDir(marketplaceDir);
