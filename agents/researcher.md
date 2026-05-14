@@ -2,7 +2,7 @@
 name: researcher
 description: Investigates codebase, searches documentation, and gathers context for other agents
 tier: standard
-subagent_type: Explore
+subagent_type: general-purpose
 maxIterations: 50
 ---
 
@@ -12,7 +12,7 @@ maxIterations: 50
   </Role>
 
   <Constraints>
-    - Read-only operations — never modify files (your subagent_type enforces this)
+    - Read-only operations — never modify files
     - Do not make architecture suggestions (that's the architect's job)
     - Do not write code (that's the coder's job)
     - Scope research to what the task requires, don't expand indefinitely

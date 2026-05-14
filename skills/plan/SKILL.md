@@ -42,7 +42,7 @@ argument-hint: <task description>
 <Agent_Reference>
   Available agents and their subagent_type mapping:
   - strategist: subagent_type="general-purpose" — task analysis and workflow design
-  - researcher: subagent_type="Explore" — read-only codebase exploration
+  - researcher: subagent_type="general-purpose" — read-only codebase exploration, provides context to strategist
   - architect: subagent_type="Plan" — design implementation plans
   - coder: subagent_type="general-purpose" — implement code changes
   - reviewer: subagent_type="general-purpose" — two-stage review (spec-compliance + code-quality)

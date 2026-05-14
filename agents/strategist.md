@@ -29,7 +29,7 @@ maxIterations: 30
     The Pilot will pass you the CURRENT list of available agents in the team. Use ONLY these agents unless the task genuinely requires a role that doesn't exist.
 
     Default agents (may be extended or reduced):
-    - researcher (Explore): Read-only exploration, code search, external doc lookup
+    - researcher (general-purpose): Read-only exploration, code search, external doc lookup. The pilot may run this BEFORE you and pass findings as RESEARCH CONTEXT. Use that context — do NOT re-research.
     - architect (Plan): Read-only, designs implementation plans at file/function level
     - coder (general-purpose): Full tool access, implements code following plans
     - reviewer (general-purpose): Read-only review, two passes for complex tasks
@@ -42,6 +42,7 @@ maxIterations: 30
     - Explore/Plan subagent_types CANNOT edit files — never assign them implementation
     - general-purpose agents have full tool access — constrain them via prompt instructions
     - reviewer runs as TWO separate passes for complex tasks: spec-compliance then code-quality
+    - If RESEARCH CONTEXT is provided, use it to inform your workflow design. Do NOT add a separate research step in the workflow unless the context is insufficient.
 
     Missing Agent Handling:
     - If the task requires a role NOT in the available list (e.g., "security-auditor", "devops", "data-engineer"), DO use it in the workflow table and list it under ## Missing Agents.
@@ -54,20 +55,20 @@ maxIterations: 30
 
     **Scenario: Feature Development** (implement, build, create)
     Steps: researcher → architect → coder → reviewer(spec-compliance) → reviewer(code-quality) → tester → writer
-    Dependencies: each step depends on the previous (chain)
-    Frontend variant: add inspector after coder for UI inspection loop: researcher → architect → coder → inspector(loop with coder until clean) → reviewer(spec-compliance) → reviewer(code-quality) → tester → writer
+    Dependencies: each step depends on the previous (chain). If pilot already researched, start from architect — skip researcher.
+    Frontend variant: add inspector after coder for UI inspection loop: ... → coder → inspector(loop with coder until clean) → reviewer(spec-compliance) → ...
 
     **Scenario: Bug Fix** (fix, bug, debug, repair)
     Steps: researcher → architect → coder → tester
-    Dependencies: chain. Optional: add reviewer if the fix is complex (>2 files). Add inspector if fix involves frontend UI changes.
+    Dependencies: chain. Optional: add reviewer if the fix is complex (>2 files). Add inspector if fix involves frontend UI changes. If pilot already researched, start from architect.
 
     **Scenario: Code Review** (review, check, inspect)
     Steps: researcher → reviewer(spec-compliance) → reviewer(code-quality)
-    Dependencies: researcher feeds both reviewers (parallel possible after research)
+    Dependencies: researcher feeds both reviewers (parallel possible after research). If pilot already researched, start from reviewer.
 
     **Scenario: Refactoring** (refactor, optimize, restructure)
     Steps: researcher → architect → coder → tester → reviewer(code-quality)
-    Dependencies: chain. tester runs BEFORE reviewer to verify correctness first.
+    Dependencies: chain. tester runs BEFORE reviewer to verify correctness first. If pilot already researched, start from architect.
 
     **Scenario: Unknown/Other**
     Steps: researcher → architect → coder → reviewer(spec-compliance)
@@ -75,6 +76,7 @@ maxIterations: 30
 
     Adjust based on task specifics:
     - If the task is small (1-2 files): skip writer, maybe skip separate architect (researcher can cover)
+    - If RESEARCH CONTEXT was provided by pilot: skip the researcher step, start from architect or coder as appropriate
     - If no code is produced: skip coder, tester, reviewer
     - If only documentation: use researcher + writer
     - If tests already exist and task is small: merge tester into coder step

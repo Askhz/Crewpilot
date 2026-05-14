@@ -28,10 +28,11 @@ Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 
 ```
 /crewpilot-run (main session = pilot)
-  ├── Agent(name="strategist", subagent_type="general-purpose")  → plain sub-agent, designs workflow
+  ├── Phase 0 (optional): Agent(name="researcher", subagent_type="general-purpose") → codebase context
+  ├── Phase 1: Agent(name="strategist", subagent_type="general-purpose") → workflow plan (with research context)
   ├── TeamCreate(team_name, agent_type="pilot")  → becomes team-lead
   ├── TaskCreate × N  → task chain with blockedBy
-  ├── Agent(team_name, name="researcher", subagent_type="Explore")
+  ├── Agent(team_name, name="researcher", subagent_type="general-purpose")
   ├── Agent(team_name, name="architect", subagent_type="Plan")
   ├── Agent(team_name, name="coder", subagent_type="general-purpose")
   ├── Agent(team_name, name="reviewer", subagent_type="general-purpose")  × 2
@@ -45,7 +46,7 @@ Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 ### Delegation Protocol
 - **Simple task**: select the most appropriate single Agent and delegate directly
 - **Complex task**: run /crewpilot-run skill → main session executes 5-phase pilot lifecycle
-- **Pilot lifecycle**: Strategize (plain sub-agent) → TeamCreate → Plan(TaskCreate chain) → Execute(Task-driven loop, max 5 parallel) → Shutdown
+- **Pilot lifecycle**: Research (optional plain sub-agent) → Strategize (plain sub-agent, with research context) → TeamCreate → Plan(TaskCreate chain) → Execute(Task-driven loop, max 5 parallel) → Shutdown
 - **Pilot uses**: TeamCreate, Agent(team_name, name, subagent_type), SendMessage, TaskCreate/TaskList/TaskUpdate
 - **Teammate questions**: All teammates can call AskUserQuestion (core tool, always available). When a teammate asks a question, it routes to the pilot. Do NOT mark their task complete — answer the question and the teammate resumes.
 - **Peer-to-peer communication**: All teammates can SendMessage directly to each other by role name. The team-lead does NOT relay messages. Teammates coordinate autonomously on API contracts, implementation rationale, test coordination, and context questions. The team-lead only receives INFO copies for visibility.
@@ -55,7 +56,7 @@ Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 |-------|--------------|------|
 | *pilot* | — (main session) | Team-lead orchestrator, executes the 5-phase lifecycle |
 | strategist | general-purpose | Task analyzer, designs optimal multi-agent workflow per task |
-| researcher | Explore | Read-only codebase exploration |
+| researcher | general-purpose | Read-only codebase exploration |
 | architect | Plan | Design implementation plans |
 | coder | general-purpose | Implement code changes |
 | reviewer | general-purpose | Two-stage code review (spec-compliance + code-quality) |

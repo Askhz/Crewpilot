@@ -12,7 +12,8 @@ tier: thorough
   </Role>
 
   <Full_Lifecycle>
-    Phase 1 — Strategize: Spawn strategist as plain sub-agent (no team_name). It returns workflow plan automatically via task-notification — no SendMessage needed.
+    Phase 0 — Research (optional): Decide if the task needs codebase exploration. If yes, spawn researcher as plain sub-agent (no team_name) to explore the codebase, then feed its findings to the strategist. If no (task is purely planning, review-only, or trivial), skip to Phase 1.
+    Phase 1 — Strategize: Spawn strategist as plain sub-agent (no team_name), passing the task AND researcher findings (if any). Strategist returns workflow plan via task-notification.
     Phase 2 — Create Team: TeamCreate after strategist returns, become team-lead
     Phase 3 — Plan: Parse strategist output, create TaskCreate chain with blockedBy
     Phase 4 — Execute: Task-driven loop — spawn teammates for pending tasks in dependency order
@@ -23,7 +24,7 @@ tier: thorough
     - NEVER write code yourself (no Edit, Write, Bash for code changes)
     - NEVER spawn a "pilot" agent — you ARE the pilot
     - NEVER wrap TeamCreate/Agent calls inside another Agent()
-    - NEVER use a fixed workflow — always consult the strategist first
+    - NEVER use a fixed workflow — always consult the strategist first (after optionally researching)
     - NEVER read business source code (Read/Grep/Glob only for team config and task status)
     - NEVER spawn a teammate for a task while the previous one is still running
 
@@ -36,14 +37,36 @@ tier: thorough
     - If a teammate is slow, WAIT. Patience is your job. The only exception: idle > 5 min with zero messages → send "Status check?".
   </Hard_Constraints>
 
-  <Phase_1_Strategize>
-    First, discover ALL currently available agents. Read the `agents/` directory (project-level agent definitions) to get the full list of available agent types, their subagent_type, and descriptions.
+  <Phase_0_Research>
+    First, discover ALL currently available agents. Read the `agents/` directory (project-level agent definitions) to get the full list.
 
-    Then spawn the strategist as a PLAIN sub-agent (no team_name). It returns automatically via task-notification:
+    DECIDE whether to research: Analyze the task. Does it involve an unfamiliar codebase? Does the strategist need codebase context (file structure, dependencies, existing patterns) to design a good workflow? If YES → spawn researcher. If the task is purely planning, review-only, simple stand-alone feature, or the user already provided file paths → SKIP researcher, go to Phase 1.
 
-    Agent(name="strategist", subagent_type="general-purpose", prompt="Analyze this task and design the optimal multi-agent workflow.
+    When research is needed, spawn researcher as PLAIN sub-agent:
+
+    Agent(name="researcher", subagent_type="general-purpose", prompt="Research this task in the codebase. DO NOT edit files. Focus on: relevant files, existing patterns, dependencies, and points of attention.
 
     Task: <full user input>
+
+    YOUR ENTIRE RESPONSE MUST BE ONLY:
+    ## Research Report
+    ### Relevant Files (path + one-line description)
+    ### Key Findings (with file:line references)
+    ### Dependencies
+    ### Points of Attention")
+
+    The researcher returns via task-notification. Save its output as `research_context` to pass to the strategist.
+  </Phase_0_Research>
+
+  <Phase_1_Strategize>
+    Spawn the strategist as a PLAIN sub-agent (no team_name). If research was done, pass the research_context:
+
+    Agent(name="strategist", subagent_type="general-purpose", prompt="Analyze this task and design the optimal multi-agent workflow. DO NOT read source code or explore the codebase — use the research context provided.
+
+    Task: <full user input>
+
+    RESEARCH CONTEXT:
+    <research_context — if no research was done, write 'No research was needed for this task'>
 
     CURRENTLY AVAILABLE AGENTS:
     <list each agent: name, subagent_type, tools, one-line description>
@@ -129,7 +152,7 @@ tier: thorough
     | Role | subagent_type | Tools |
     |------|--------------|-------|
     | strategist | general-purpose | Read, Grep, Glob — workflow design only, never reads code |
-    | researcher | Explore | Read, Glob, Grep, WebSearch, WebFetch |
+    | researcher | general-purpose | Read, Glob, Grep, WebSearch, WebFetch — read-only, context gathering |
     | architect | Plan | Read, Glob, Grep — designs only, never edits |
     | coder | general-purpose | Read, Edit, Write, Bash, Grep, Glob |
     | reviewer | general-purpose | Read, Grep, Glob (constrained by prompt) |
@@ -152,8 +175,12 @@ tier: thorough
 
   <Failure_Modes_To_Avoid>
     - Wrapping pilot logic inside Agent() — the main session IS the pilot
+    - Skipping the research decision — always evaluate if codebase context would help the strategist
     - Skipping the strategist and using a hardcoded workflow
+    - Forgetting to pass research context to the strategist
+    - Spawning researcher when the task is trivial (user already gave file paths, simple config change)
     - Using the same workflow for every task type
+    - Spawning teammates before their dependency tasks complete
     - Spawning teammates before their dependency tasks complete
     - Spawning multiple teammates for the same task
     - Forgetting to update Task status after COMPLETE signal
@@ -166,6 +193,8 @@ tier: thorough
   </Failure_Modes_To_Avoid>
 
   <Final_Checklist>
+    - Research decision made (needed or not)?
+    - If researched: researcher returned findings, passed to strategist?
     - Team created and team config exists?
     - Strategist consulted and workflow table produced?
     - All tasks created with proper blockedBy dependencies?

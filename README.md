@@ -38,7 +38,7 @@ Crewpilot gives you nine specialized agents. Each has a defined role, tool acces
 |-------|------|-------|
 | **pilot** | Team-lead orchestrator, runs the 5-phase lifecycle | TeamCreate, Agent, SendMessage, Task tools |
 | **strategist** | Task analyzer, designs optimal multi-agent workflow per task | Read, Grep, Glob — workflow design only |
-| **researcher** | Read-only codebase exploration, gathers context | Read, Glob, Grep, WebSearch, WebFetch |
+| **researcher** | Read-only codebase exploration, gathers context (before strategist) | Read, Glob, Grep, WebSearch, WebFetch |
 | **architect** | Designs implementation plans at file/function level | Read, Glob, Grep — plans only, never edits |
 | **coder** | Implements code changes following the architect's plan | Full tool access, constrained by prompt |
 | **reviewer** | Two-stage review: spec-compliance then code-quality | Read, Grep, Glob — read-only |
@@ -50,15 +50,16 @@ Every agent communicates via a structured signal protocol: PROGRESS for mileston
 
 ## How It Works
 
-### The 5-Phase Pilot Lifecycle
+### The 6-Phase Pilot Lifecycle
 
 ```
 /crewpilot-run (main session = pilot)
-  ├── Phase 1: Strategize — plain sub-agent designs the workflow
+  ├── Phase 0 (optional): Research — spawn researcher to explore codebase, gather context
+  ├── Phase 1: Strategize — plain sub-agent designs the workflow (with research context if available)
   ├── Phase 2: TeamCreate — register the crew, pilot becomes team-lead
   ├── Phase 3: Plan — parse strategy table into TaskCreate chains with blocking deps
   ├── Phase 4: Execute — task-driven loop, spawn ≤5 teammates in parallel
-  │     ├── Agent(team, name="researcher", subagent_type="Explore")
+  │     ├── Agent(team, name="researcher", subagent_type="general-purpose")
   │     ├── Agent(team, name="architect", subagent_type="Plan")
   │     ├── Agent(team, name="coder", subagent_type="general-purpose")
   │     ├── Agent(team, name="reviewer", subagent_type="general-purpose") ×2
@@ -68,7 +69,7 @@ Every agent communicates via a structured signal protocol: PROGRESS for mileston
   └── Phase 5: Shutdown — summarize results, shutdown teammates
 ```
 
-The pilot doesn't write code. It doesn't read your source files. It doesn't verify your teammate's output. It manages the process — spawning agents in dependency order, routing task signals, and ensuring every task gate is met before the next step begins. Peer-to-peer communication between teammates happens autonomously; the pilot only receives INFO copies for visibility.
+The pilot doesn't write code. It doesn't read your source files. It doesn't verify your teammate's output. It manages the process — first deciding whether codebase research is needed, then feeding findings to the strategist for a smarter workflow, spawning agents in dependency order, routing task signals, and ensuring every task gate is met before the next step begins.
 
 ### IntentGate — Automatic Task Classification
 
@@ -76,12 +77,12 @@ You don't need to remember commands. Crewpilot classifies your intent from what 
 
 | You say | Crewpilot classifies as | What happens |
 |---------|------------------------|--------------|
-| "build a login page" | `implement` | strategist → architect → coder → reviewer → tester → writer |
-| "fix the auth bug" | `fix` | researcher → architect → coder → tester |
-| "build a dashboard UI" | `implement` (frontend) | researcher → architect → coder → inspector (loop) → reviewer → tester → writer |
+| "build a login page" | `implement` | research(codebase) → strategist → architect → coder → reviewer → tester → writer |
+| "fix the auth bug" | `fix` | research(codebase) → strategist → architect → coder → tester |
+| "build a dashboard UI" | `implement` (frontend) | research → strategist → architect → coder → inspector (loop) → reviewer → tester → writer |
 | "explain how routing works" | `explain` | single Agent (no team needed) |
-| "review the API changes" | `review` | researcher → reviewer (spec) → reviewer (quality) |
-| "refactor the database layer" | `refactor` | researcher → architect → coder → tester → reviewer |
+| "review the API changes" | `review` | research → strategist → reviewer (spec) → reviewer (quality) |
+| "refactor the database layer" | `refactor` | research → strategist → architect → coder → tester → reviewer |
 | "list all endpoints" | `other` | direct tool use |
 
 For complex tasks, just include the word `crewpilot` in your prompt to trigger the full team. Use `crewpilot-plan` or `cp-plan` to generate a plan first and review it before executing.
@@ -120,7 +121,7 @@ For simple tasks (1-2 files), the strategist skips unnecessary agents — no wri
 
 ## Architecture
 
-The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawned without `team_name`) don't have the `Agent` tool and can't spawn teammates. Only the main session can call `TeamCreate` and spawn teammates via `Agent(team_name, ...)`. The pilot orchestrates, the teammates execute.
+The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawned without `team_name`) don't have the `Agent` tool and can't spawn teammates. Only the main session can call `TeamCreate` and spawn teammates via `Agent(team_name, ...)`. The pilot first decides if codebase research is needed, feeds findings to the strategist, then orchestrates the team.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -138,7 +139,8 @@ The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawn
 ┌──────────────────────────────────────────────────┐
 │              PILOT (Main Session)                 │
 │  ┌─────────────────────────────────────────────┐ │
-│  │ Phase 1: Agent("strategist", general-purpose)│ │
+│  │ Phase 0 (optional): Agent("researcher")       │ │
+│  │ Phase 1: Agent("strategist") + research ctx   │ │
 │  │ Phase 2: TeamCreate("crew-dark-mode")        │ │
 │  │ Phase 3: TaskCreate × N (with blockedBy)     │ │
 │  │ Phase 4: Task-driven execution loop          │ │
@@ -209,7 +211,7 @@ Crewpilot is configured through `presets/config.default.yaml`, copied to your pr
 ## Design Principles
 
 - **Main session is the pilot.** No wrapping orchestration inside Agent() — the pilot has direct access to TeamCreate and Agent tools.
-- **Strategize first, execute second.** Every task gets a custom workflow from the strategist. No hardcoded pipelines.
+- **Research first, strategize second.** The pilot decides if codebase research is needed. If yes, researcher runs first and findings feed the strategist for smarter workflow design. Simple tasks skip research.
 - **Task-driven, not time-driven.** The pilot loops on task status, not timers. Each task has dependencies, owner, and explicit completion signals.
 - **Teammates own their tasks.** The pilot never reads your code to "verify" work. It trusts the COMPLETE signal. Separation of orchestration from execution.
 - **Teammates talk to each other.** Agents SendMessage directly by role name — no relay through the pilot. Architect asks researcher for context, coder⇄tester align on behavior, inspector⇄coder loop to fix UI issues. The pilot stays out of peer conversations.
