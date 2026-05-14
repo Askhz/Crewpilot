@@ -34,6 +34,7 @@ maxIterations: 30
     - coder (general-purpose): Full tool access, implements code following plans
     - reviewer (general-purpose): Read-only review, two passes for complex tasks
     - tester (general-purpose): Full tool access, writes/runs tests
+    - inspector (general-purpose): Full tool access, uses agent-browser for frontend UI inspection, loops with coder to fix issues
     - writer (general-purpose): Full tool access, documentation only
     - pilot (main session, NOT assignable): Team-lead orchestrator, never a task target
 
@@ -54,10 +55,11 @@ maxIterations: 30
     **Scenario: Feature Development** (implement, build, create)
     Steps: researcher → architect → coder → reviewer(spec-compliance) → reviewer(code-quality) → tester → writer
     Dependencies: each step depends on the previous (chain)
+    Frontend variant: add inspector after coder for UI inspection loop: researcher → architect → coder → inspector(loop with coder until clean) → reviewer(spec-compliance) → reviewer(code-quality) → tester → writer
 
     **Scenario: Bug Fix** (fix, bug, debug, repair)
     Steps: researcher → architect → coder → tester
-    Dependencies: chain. Optional: add reviewer if the fix is complex (>2 files)
+    Dependencies: chain. Optional: add reviewer if the fix is complex (>2 files). Add inspector if fix involves frontend UI changes.
 
     **Scenario: Code Review** (review, check, inspect)
     Steps: researcher → reviewer(spec-compliance) → reviewer(code-quality)
@@ -76,17 +78,19 @@ maxIterations: 30
     - If no code is produced: skip coder, tester, reviewer
     - If only documentation: use researcher + writer
     - If tests already exist and task is small: merge tester into coder step
+    - If project has a frontend (web UI): add inspector after coder for UI inspection → fix → re-inspect loop. Inspector sends ISSUE signals to coder, coder fixes and replies, inspector re-verifies. Loop terminates after 3 rounds or all clear.
 
     PARALLEL EXECUTION RULE:
     - When multiple steps share the same "Depends On" (or all start from "—"), they CAN run in parallel.
     - NEVER design a parallel group larger than 5 simultaneous agents. If more independent steps exist, chain them in groups of ≤5.
 
     PEER-TO-PEER COMMUNICATION:
-    All teammates (researcher, architect, coder, reviewer, tester, writer) can SendMessage directly to each other by role name — the team-lead does NOT relay. This enables:
+    All teammates (researcher, architect, coder, reviewer, tester, inspector, writer) can SendMessage directly to each other by role name — the team-lead does NOT relay. This enables:
     - Architect can ask researcher for missing context
     - Coder can ask architect for plan clarification
     - Coder↔tester can coordinate on expected behavior and integration test setup
     - Parallel coders (e.g., frontend + backend) can coordinate API contracts directly
+    - Inspector↔coder loop: inspector finds UI issues → sends ISSUE signal to coder → coder fixes → replies → inspector re-verifies (max 3 rounds)
     - Reviewer can ask coder about implementation rationale
     - Writer can ask any teammate for context needed for docs
 
@@ -94,6 +98,7 @@ maxIterations: 30
     - "Coordinate API contract with backend coder"
     - "Ask researcher for auth module details if needed"
     - "Confirm expected behavior with coder before writing tests"
+    - "Inspect UI pages with agent-browser, send ISSUE signals to coder, re-inspect after fixes (loop max 3 rounds)"
 
     Do NOT add coordination-only steps to the table — peer comm is embedded within the work, not a separate task.
   </Workflow_Design_Rules>

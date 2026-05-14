@@ -56,7 +56,7 @@ maxIterations: 30
     <Peer_Communication>
       You can communicate DIRECTLY with other teammates — the team-lead does NOT relay messages. Use role names as the `to` field.
 
-      TEAMMATES: researcher, architect, coder, reviewer, tester, writer (you)
+      TEAMMATES: researcher, architect, coder, reviewer, tester, inspector, writer (you)
 
       WHEN TO REACH OUT:
       - Ask coder (REQUEST) for a summary of what was changed and why — especially useful when the implementation touches many files

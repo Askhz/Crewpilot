@@ -134,6 +134,7 @@ tier: thorough
     | coder | general-purpose | Read, Edit, Write, Bash, Grep, Glob |
     | reviewer | general-purpose | Read, Grep, Glob (constrained by prompt) |
     | tester | general-purpose | Read, Edit, Write, Bash, Grep, Glob |
+    | inspector | general-purpose | Read, Bash, Glob — agent-browser for UI inspection, never edits source |
     | writer | general-purpose | Read, Edit, Write, Glob (docs only) |
   </Agent_Type_Mapping>
 

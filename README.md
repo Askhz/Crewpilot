@@ -1,10 +1,10 @@
 # Crewpilot
 
-> Team-based multi-agent orchestration for Claude Code. Turn one AI into a team of eight.
+> Team-based multi-agent orchestration for Claude Code. Turn one AI into a team of nine.
 
 When you ask a coding agent to "build a feature", it jumps in alone — reads files, writes code, runs tests, all in a single thread. For simple tasks this works fine. But when the task spans 5+ files, touches multiple layers, and needs review, testing, and docs — a solo agent gets sloppy. It skips steps. It loses context. It ships bugs.
 
-**Crewpilot fixes this.** It transforms Claude Code into a coordinated team of specialized agents — researcher, architect, coder, reviewer, tester, writer — each focused on their role, each in their own sandbox, orchestrated by a pilot that manages the entire mission. You describe what you want, the strategist designs the workflow, the pilot dispatches teammates, and you get back a fully reviewed, tested, documented result.
+**Crewpilot fixes this.** It transforms Claude Code into a coordinated team of specialized agents — researcher, architect, coder, reviewer, tester, inspector, writer — each focused on their role, each in their own sandbox, orchestrated by a pilot that manages the entire mission. You describe what you want, the strategist designs the workflow, the pilot dispatches teammates, and you get back a fully reviewed, tested, documented result.
 
 Built on Claude Code's [TeamCreate API](https://claude.ai/code), Crewpilot is a plugin — not a framework, not a new tool, not something you have to learn. Install it, say `crewpilot <task>`, and your AI agent becomes a team.
 
@@ -32,7 +32,7 @@ node /path/to/Crewpilot/scripts/uninstall.mjs
 
 ## The Team
 
-Crewpilot gives you eight specialized agents. Each has a defined role, tool access, and output contract — no ambiguity, no drift.
+Crewpilot gives you nine specialized agents. Each has a defined role, tool access, and output contract — no ambiguity, no drift.
 
 | Agent | Role | Tools |
 |-------|------|-------|
@@ -43,9 +43,10 @@ Crewpilot gives you eight specialized agents. Each has a defined role, tool acce
 | **coder** | Implements code changes following the architect's plan | Full tool access, constrained by prompt |
 | **reviewer** | Two-stage review: spec-compliance then code-quality | Read, Grep, Glob — read-only |
 | **tester** | Writes and runs tests for correctness and edge cases | Read, Edit, Write, Bash — test files only |
+| **inspector** | Frontend UI inspection with agent-browser, loops with coder to fix issues | Read, Bash, Glob — agent-browser for inspection, never edits source |
 | **writer** | Documentation, README updates, inline comments | Read, Edit, Write, Glob — docs only |
 
-Every agent communicates via a structured signal protocol: PROGRESS for milestones, COMPLETE when done, BLOCKED when stuck. The pilot routes signals and manages dependencies — it never reads your source code or second-guesses a teammate's work.
+Every agent communicates via a structured signal protocol: PROGRESS for milestones, COMPLETE when done, BLOCKED when stuck. **Teammates can also SendMessage directly to each other by role name** — the architect asks the researcher for missing context, the coder coordinates API contracts with parallel coders, the inspector loops with the coder to fix UI issues. The pilot routes task signals but never relays peer messages; teammates collaborate autonomously.
 
 ## How It Works
 
@@ -62,11 +63,12 @@ Every agent communicates via a structured signal protocol: PROGRESS for mileston
   │     ├── Agent(team, name="coder", subagent_type="general-purpose")
   │     ├── Agent(team, name="reviewer", subagent_type="general-purpose") ×2
   │     ├── Agent(team, name="tester", subagent_type="general-purpose")
+  │     ├── Agent(team, name="inspector", subagent_type="general-purpose")
   │     └── Agent(team, name="writer", subagent_type="general-purpose")
   └── Phase 5: Shutdown — summarize results, shutdown teammates
 ```
 
-The pilot doesn't write code. It doesn't read your source files. It doesn't verify your teammate's output. It manages the process — spawning agents in dependency order, routing signals, and ensuring every task gate is met before the next step begins.
+The pilot doesn't write code. It doesn't read your source files. It doesn't verify your teammate's output. It manages the process — spawning agents in dependency order, routing task signals, and ensuring every task gate is met before the next step begins. Peer-to-peer communication between teammates happens autonomously; the pilot only receives INFO copies for visibility.
 
 ### IntentGate — Automatic Task Classification
 
@@ -76,6 +78,7 @@ You don't need to remember commands. Crewpilot classifies your intent from what 
 |---------|------------------------|--------------|
 | "build a login page" | `implement` | strategist → architect → coder → reviewer → tester → writer |
 | "fix the auth bug" | `fix` | researcher → architect → coder → tester |
+| "build a dashboard UI" | `implement` (frontend) | researcher → architect → coder → inspector (loop) → reviewer → tester → writer |
 | "explain how routing works" | `explain` | single Agent (no team needed) |
 | "review the API changes" | `review` | researcher → reviewer (spec) → reviewer (quality) |
 | "refactor the database layer" | `refactor` | researcher → architect → coder → tester → reviewer |
@@ -92,7 +95,13 @@ The strategist adapts the agent chain to the task — no hardcoded pipelines:
 researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer
 ```
 
-**Bug Fix** (4 agents, chain, optional reviewer for complex fixes)
+**Feature Development — Frontend** (8 agents, inspector loop)
+```
+researcher → architect → coder → inspector(loop with coder) → reviewer(spec) → reviewer(quality) → tester → writer
+```
+The inspector uses agent-browser to check layout, content, interactions, console errors, and network requests. It sends ISSUE signals to the coder, who fixes and replies, and the inspector re-verifies — looping up to 3 rounds until every issue is resolved.
+
+**Bug Fix** (4 agents, chain, +inspector for UI fixes)
 ```
 researcher → architect → coder → tester
 ```
@@ -147,15 +156,15 @@ The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawn
           └────────────┼────────────┘
                        ▼
     ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │reviewer  │ │reviewer  │ │  tester  │
+    │reviewer  │ │reviewer  │ │inspector │
     │  (spec)  │ │(quality) │ │(general) │
+    └──────────┘ └──────────┘ └────┬─────┘
+                       │           │
+                       ▼           ▼ (loop)
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │  tester  │ │  writer  │ │  coder   │
+    │(general) │ │(general) │ │  (fix)   │
     └──────────┘ └──────────┘ └──────────┘
-                       │
-                       ▼
-                ┌──────────┐
-                │  writer  │
-                │(general) │
-                └──────────┘
 ```
 
 ## Project Structure
@@ -170,6 +179,7 @@ Crewpilot/
 │   ├── coder.md         # Code implementer
 │   ├── reviewer.md      # Two-stage code reviewer
 │   ├── tester.md        # Test writer and runner
+│   ├── inspector.md     # Frontend UI inspector with agent-browser
 │   └── writer.md        # Documentation writer
 ├── skills/              # User-invocable skills
 │   ├── run/SKILL.md     # /crewpilot-run — full orchestration lifecycle
@@ -202,7 +212,8 @@ Crewpilot is configured through `presets/config.default.yaml`, copied to your pr
 - **Strategize first, execute second.** Every task gets a custom workflow from the strategist. No hardcoded pipelines.
 - **Task-driven, not time-driven.** The pilot loops on task status, not timers. Each task has dependencies, owner, and explicit completion signals.
 - **Teammates own their tasks.** The pilot never reads your code to "verify" work. It trusts the COMPLETE signal. Separation of orchestration from execution.
-- **Task economy.** For simple tasks (1-2 files), the strategist skips unnecessary agents. Don't spawn a team of 7 to change a config value.
+- **Teammates talk to each other.** Agents SendMessage directly by role name — no relay through the pilot. Architect asks researcher for context, coder⇄tester align on behavior, inspector⇄coder loop to fix UI issues. The pilot stays out of peer conversations.
+- **Task economy.** For simple tasks (1-2 files), the strategist skips unnecessary agents. Don't spawn a team of 9 to change a config value.
 - **YAGNI for agents.** Don't create agents for roles you don't need. The strategist only uses agents from the available directory, requesting new ones only when genuinely required.
 
 ## License

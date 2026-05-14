@@ -47,11 +47,13 @@ argument-hint: <task description>
   - coder: subagent_type="general-purpose" — implement code changes
   - reviewer: subagent_type="general-purpose" — two-stage review (spec-compliance + code-quality)
   - tester: subagent_type="general-purpose" — write and run tests
+  - inspector: subagent_type="general-purpose" — frontend UI inspection with agent-browser, loops with coder
   - writer: subagent_type="general-purpose" — documentation updates
 
   Workflow patterns by task type:
   - Feature: researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer
-  - Bug Fix: researcher → architect → coder → tester (± reviewer for complex fixes)
+  - Feature (frontend): researcher → architect → coder → inspector(loop with coder) → reviewer(spec) → reviewer(quality) → tester → writer
+  - Bug Fix: researcher → architect → coder → tester (± reviewer for complex fixes, + inspector for UI fixes)
   - Review: researcher → reviewer(spec) → reviewer(quality)
   - Refactor: researcher → architect → coder → tester → reviewer(quality)
   - Simple/small: skip writer, merge steps where possible
@@ -62,6 +64,7 @@ argument-hint: <task description>
   - Coder ⇄ Architect (plan clarification, design questions)
   - Coder ⇄ Tester (behavior alignment, integration test coordination)
   - Coder ⇄ Coder (API contract coordination for parallel frontend+backend)
+  - Inspector → Coder → Inspector (UI issue → fix → re-inspect loop, max 3 rounds)
   - Reviewer ⇄ Coder (implementation rationale)
   - Writer ⇄ Any (docs context)
 </Agent_Reference>

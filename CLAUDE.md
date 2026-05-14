@@ -60,6 +60,7 @@ Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 | coder | general-purpose | Implement code changes |
 | reviewer | general-purpose | Two-stage code review (spec-compliance + code-quality) |
 | tester | general-purpose | Write and run tests |
+| inspector | general-purpose | Frontend UI inspection with agent-browser, loops with coder to fix issues |
 | writer | general-purpose | Documentation updates |
 
 > *pilot* is the main session — NOT a spawned agent. All other agents are spawned as teammates via `Agent(team_name, name, subagent_type, prompt)`. The strategist decides the workflow dynamically per task.
