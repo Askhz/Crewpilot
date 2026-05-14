@@ -48,6 +48,7 @@ Only the main session can call `TeamCreate` and `Agent(team_name, ...)`.
 - **Pilot lifecycle**: Strategize (plain sub-agent) → TeamCreate → Plan(TaskCreate chain) → Execute(Task-driven loop, max 5 parallel) → Shutdown
 - **Pilot uses**: TeamCreate, Agent(team_name, name, subagent_type), SendMessage, TaskCreate/TaskList/TaskUpdate
 - **Teammate questions**: All teammates can call AskUserQuestion (core tool, always available). When a teammate asks a question, it routes to the pilot. Do NOT mark their task complete — answer the question and the teammate resumes.
+- **Peer-to-peer communication**: All teammates can SendMessage directly to each other by role name. The team-lead does NOT relay messages. Teammates coordinate autonomously on API contracts, implementation rationale, test coordination, and context questions. The team-lead only receives INFO copies for visibility.
 
 ### Agent Directory
 | Agent | subagent_type | Role |

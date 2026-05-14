@@ -55,6 +55,15 @@ argument-hint: <task description>
   - Review: researcher → reviewer(spec) → reviewer(quality)
   - Refactor: researcher → architect → coder → tester → reviewer(quality)
   - Simple/small: skip writer, merge steps where possible
+
+  Peer-to-peer communication: All teammates can SendMessage directly to each
+  other by role name. The team-lead does NOT relay. Key collaboration patterns:
+  - Architect ⇄ Researcher (context questions, design clarification)
+  - Coder ⇄ Architect (plan clarification, design questions)
+  - Coder ⇄ Tester (behavior alignment, integration test coordination)
+  - Coder ⇄ Coder (API contract coordination for parallel frontend+backend)
+  - Reviewer ⇄ Coder (implementation rationale)
+  - Writer ⇄ Any (docs context)
 </Agent_Reference>
 
 <Escalation>

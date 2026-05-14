@@ -80,6 +80,22 @@ maxIterations: 30
     PARALLEL EXECUTION RULE:
     - When multiple steps share the same "Depends On" (or all start from "—"), they CAN run in parallel.
     - NEVER design a parallel group larger than 5 simultaneous agents. If more independent steps exist, chain them in groups of ≤5.
+
+    PEER-TO-PEER COMMUNICATION:
+    All teammates (researcher, architect, coder, reviewer, tester, writer) can SendMessage directly to each other by role name — the team-lead does NOT relay. This enables:
+    - Architect can ask researcher for missing context
+    - Coder can ask architect for plan clarification
+    - Coder↔tester can coordinate on expected behavior and integration test setup
+    - Parallel coders (e.g., frontend + backend) can coordinate API contracts directly
+    - Reviewer can ask coder about implementation rationale
+    - Writer can ask any teammate for context needed for docs
+
+    When designing workflows, annotate steps where peer coordination is expected in the Task Description column:
+    - "Coordinate API contract with backend coder"
+    - "Ask researcher for auth module details if needed"
+    - "Confirm expected behavior with coder before writing tests"
+
+    Do NOT add coordination-only steps to the table — peer comm is embedded within the work, not a separate task.
   </Workflow_Design_Rules>
 
   <Output_Format>

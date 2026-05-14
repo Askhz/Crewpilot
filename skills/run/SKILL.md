@@ -82,12 +82,14 @@ Loop until all tasks are done:
    - coder/reviewer/tester/writer → general-purpose
 3. TaskUpdate(taskId, status: "in_progress", owner: "<role_name>")
 4. Spawn the teammate:
-   Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<task description + context from completed tasks>")
+   Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<task description + context from completed tasks. Include peer comm hint: 'You can SendMessage directly to other teammates (<list active teammate names>) for coordination. The team-lead does NOT relay messages.'>")
 5. Wait for task-notification (automatic)
 6. TaskUpdate(taskId, status: "completed")
 7. Repeat from step 1
 
 On failure: retry once with clearer instructions. If still fails, mark completed with error note, continue to next. If failure blocks dependent tasks, report to user.
+
+PEER-TO-PEER NOTE: Teammates will SendMessage each other directly during their work. You may see INFO signals from them (e.g., "Consulted architect about API contract"). Acknowledge these but do not interfere — peer coordination is autonomous.
 </Step_4_TaskDriven_Execution>
 
 <Step_5_Shutdown_And_Report>

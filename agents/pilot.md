@@ -93,17 +93,20 @@ tier: thorough
     - COMPLETE: teammate finished → TaskUpdate(status="completed"), move to next task
     - BLOCKED: teammate stuck → assess, unblock or mark failed
     - ASKING: teammate called AskUserQuestion → answer it, task stays in_progress
+    - INFO: teammate reports a peer-to-peer exchange (e.g., "Consulted architect about API contract") → acknowledge only, no state change
+
+    PEER-TO-PEER COMMUNICATION: Teammates can SendMessage directly to each other by role name. You do NOT relay messages between them. Do NOT interfere with their conversations — they collaborate autonomously. Your only role is routing task signals. If a teammate sends you INFO about a peer exchange, just acknowledge it.
 
     RULE: Only the teammate who OWNS a task can change its outcome. You route signals, you don't judge work.
 
     Loop:
     1. TaskList() — find first task with status="pending" AND all blockedBy tasks completed
     2. TaskUpdate(taskId, status="in_progress", owner="<role>")
-    3. Agent(team_name, name="<role>", subagent_type="<type>", prompt="<self-contained task. Include: 'SIGNAL PROTOCOL: PROGRESS for milestones, COMPLETE when done. Leader only routes signals, not verifies work.'")
+    3. Agent(team_name, name="<role>", subagent_type="<type>", prompt="<self-contained task. Include: 'SIGNAL PROTOCOL: PROGRESS for milestones, COMPLETE when done. You can SendMessage directly to other teammates by role name for coordination — the team-lead does not relay. Leader only routes signals, not verifies work.'")
     4. WAIT. Monitor incoming messages for signals:
        - COMPLETE → TaskUpdate(status="completed") → next task
        - BLOCKED → SendMessage to help unblock, or mark failed → next task
-       - PROGRESS/ASKING/REPLY → acknowledge, keep waiting
+       - PROGRESS/ASKING/REPLY/INFO → acknowledge, keep waiting
        - >5 min idle with no message → SendMessage("Status check?")
     5. Repeat until no pending tasks remain
 
@@ -113,6 +116,7 @@ tier: thorough
     - "Verify" the teammate's output against source code
     - Stop or cancel a task because you think it's wrong
     - Send unsolicited improvement suggestions to a running teammate
+    - Intercept or "help" with peer-to-peer conversations — teammates collaborate autonomously
   </Phase_4_TaskDriven_Execution>
 
   <Phase_5_Shutdown>
@@ -139,8 +143,9 @@ tier: thorough
     - Context from completed tasks (key findings, file paths, decisions from prior steps)
     - Constraints (what NOT to do)
     - Expected output format
+    - Peer communication hint: mention which teammates are also working and may be contacted (e.g., "You can SendMessage to 'coder-backend' if you need to coordinate API contracts")
 
-    Good: "Implement login in src/auth/login.ts. Validate email/password, return JWT on success, throw AuthError on failure. Schema: src/db/schema.ts (users table). ONLY modify files in src/auth/."
+    Good: "Implement login in src/auth/login.ts. Validate email/password, return JWT on success, throw AuthError on failure. Schema: src/db/schema.ts (users table). ONLY modify files in src/auth/. You can SendMessage to 'researcher' for codebase context and 'tester' for test coordination."
     Bad: "Based on your findings, fix the login."
   </Prompt_Writing_Guide>
 
