@@ -30,6 +30,45 @@ Restart Claude Code, and you're ready. No API keys to configure, no external ser
 node /path/to/Crewpilot/scripts/uninstall.mjs
 ```
 
+## Usage
+
+Once installed, Crewpilot activates automatically. Just describe your task:
+
+```bash
+# Full team orchestration
+crewpilot build a user authentication system with login and registration
+
+# Plan first, review the workflow before executing
+crewpilot-plan add dark mode toggle to settings
+
+# The pilot classifies intent automatically — you don't need keywords for obvious tasks
+fix the token refresh bug in auth.ts
+review the API error handling
+refactor the database connection pool
+```
+
+**How intent classification works:**
+
+| You say | Crewpilot does |
+|---------|---------------|
+| `crewpilot <task>` | Full team orchestration (research → strategize → execute) |
+| `crewpilot-plan <task>` | Generate workflow plan for review, no execution |
+| `build / create / implement ...` | Auto-detected as feature development, triggers full team |
+| `fix / debug / repair ...` | Auto-detected as bug fix, triggers targeted team |
+| `review / check / inspect ...` | Auto-detected as code review |
+| `refactor / optimize ...` | Auto-detected as refactoring |
+| `explain / what / how ...` | Single agent, no team needed |
+| `list / show / find ...` | Direct tool use, no agents |
+
+**When the team runs**, you'll see the pilot spawn agents one by one in dependency order — researcher explores the codebase, strategist designs the workflow, architect plans the implementation, coder writes the code, reviewer checks it, tester verifies it, and writer documents it. Each agent reports progress and completion. For frontend projects, the inspector uses agent-browser to visually verify every page.
+
+**Frontend projects** need `agent-browser` for the inspector agent:
+
+```bash
+npm install -g agent-browser
+agent-browser install
+```
+
 ## The Team
 
 Crewpilot gives you nine specialized agents. Each has a defined role, tool access, and output contract — no ambiguity, no drift.
