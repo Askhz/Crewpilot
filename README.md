@@ -16,7 +16,7 @@ cd Crewpilot
 node scripts/install.mjs
 ```
 
-This registers Crewpilot as a Claude Code plugin and copies the agents, skills, and config into `~/.claude/plugins/`. Then in your project:
+This registers Crewpilot as a Claude Code plugin and copies the skills and config into `~/.claude/plugins/`. Then in your project:
 
 ```bash
 node /path/to/Crewpilot/scripts/init-project.mjs   # creates .crewpilot/ in your project
@@ -212,28 +212,29 @@ The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawn
 
 ```
 Crewpilot/
-├── agents/              # Agent definitions (YAML frontmatter + XML prompts)
-│   ├── pilot.md         # Team-lead orchestrator + workflow designer
-│   ├── researcher.md    # Codebase explorer (read-only)
-│   ├── architect.md     # Implementation plan designer
-│   ├── coder.md         # Code implementer
-│   ├── reviewer.md      # Two-stage code reviewer
-│   ├── tester.md        # Test writer and runner
-│   ├── inspector.md     # Frontend UI inspector with agent-browser
-│   └── writer.md        # Documentation writer
-├── skills/              # User-invocable skills
-│   ├── run/SKILL.md     # /crewpilot-run — full orchestration lifecycle
-│   └── plan/SKILL.md    # /crewpilot-plan — plan preview, no execution
+├── skills/                    # User-invocable skills
+│   ├── run/
+│   │   ├── SKILL.md           # /crewpilot-run — full orchestration lifecycle
+│   │   └── prompts/           # Agent role prompts (injected at spawn time)
+│   │       ├── researcher.md
+│   │       ├── architect.md
+│   │       ├── coder.md
+│   │       ├── reviewer.md
+│   │       ├── tester.md
+│   │       ├── inspector.md
+│   │       ├── writer.md
+│   │       └── _communication.md  # Shared communication protocol
+│   └── plan/SKILL.md          # /crewpilot-plan — plan preview, no execution
 ├── presets/
-│   └── config.default.yaml  # IntentGate rules, keyword routing, model tiers
+│   └── config.default.yaml    # IntentGate rules, keyword routing, model tiers
 ├── scripts/
-│   ├── install.mjs      # npx crewpilot install
-│   ├── init-project.mjs # npx crewpilot init
-│   └── uninstall.mjs    # npx crewpilot uninstall
-├── .claude-plugin/      # Claude Code plugin manifest
+│   ├── install.mjs            # npx crewpilot install
+│   ├── init-project.mjs       # npx crewpilot init
+│   └── uninstall.mjs          # npx crewpilot uninstall
+├── .claude-plugin/            # Claude Code plugin manifest
 │   ├── plugin.json
 │   └── marketplace.json
-├── CLAUDE.md            # Project instructions (loaded into every session)
+├── CLAUDE.md                  # Project instructions (loaded into every session)
 ├── package.json
 └── LICENSE
 ```

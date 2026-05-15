@@ -65,6 +65,15 @@ If Phase 0 already researched, skip researcher step in the workflow.
 
 PARALLEL: max 5 agents at once.
 
+Agent Usage Rules (when to include each agent):
+- **researcher**: Use BEFORE any code work when the task involves unfamiliar code or multiple files. Skip when the user already provided specific file paths or for trivial single-file changes.
+- **architect**: Use AFTER research for tasks touching 3+ files or introducing new abstractions. Skip for trivial single-file changes — researcher can cover.
+- **coder**: The primary workhorse. Use for any code writing, editing, or file creation. Always present in code-producing workflows.
+- **reviewer**: spec-compliance pass is mandatory for every feature. code-quality pass for 3+ file changes. Run as TWO separate tasks for complex work. Skip all review for trivial changes.
+- **tester**: Use AFTER coder to verify correctness, edge cases, and error paths. Skip when tests already exist and the code change is trivial.
+- **inspector**: Use ONLY for projects with a web frontend (React/Vue/HTML). Requires dev server running. Never use for backend-only projects.
+- **writer**: Use LAST in the workflow — after all code is written, reviewed, and tested. Skip for trivial changes or when the project has no documentation.
+
 Produce your workflow design:
 
 ## Task Analysis
@@ -126,11 +135,30 @@ Loop until all tasks are done:
    - architect → Plan
    - coder/reviewer/tester/inspector/writer → general-purpose
 3. TaskUpdate(taskId, status: "in_progress", owner: "<role_name>")
-4. Spawn the teammate (MUST include full handoff context from all completed upstream tasks):
-   Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<task description + upstream COMPLETE output: architect's plan for coder, coder's changes for tester, etc. Include: 'After COMPLETE, send HANDOFF to downstream teammates with your full output.' Include peer comm hint.>")
-5. Wait for task-notification (automatic)
-6. TaskUpdate(taskId, status: "completed")
-7. Repeat from step 1
+4. **Build the prompt**: Read TWO files from the plugin's prompts directory:
+   - Read `{CLAUDE_PLUGIN_ROOT}/skills/run/prompts/<role_name>.md` — role-specific instructions
+   - Read `{CLAUDE_PLUGIN_ROOT}/skills/run/prompts/_communication.md` — shared communication protocol
+   Combine them into the prompt:
+   ```
+   <role prompt verbatim>
+
+   <_communication.md verbatim>
+
+   ---
+
+   ## Task
+   <task description from TaskCreate>
+
+   ## Context from Upstream Tasks
+   <paste the COMPLETE output of every task this one depends on>
+   ```
+   If CLAUDE_PLUGIN_ROOT is not set, derive it from the skill file location (this SKILL.md lives at `<plugin_root>/skills/run/SKILL.md`).
+5. Spawn: Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<full combined prompt from step 4>")
+6. Wait for task-notification (automatic)
+7. TaskUpdate(taskId, status: "completed")
+8. Repeat from step 1
+
+The role prompt and communication protocol are MANDATORY. They give the teammate its identity, constraints, and signaling protocol. Without them, teammates won't know how to behave or how to report completion.
 
 On failure: retry once with clearer instructions. If still fails, mark completed with error note, continue to next. If failure blocks dependent tasks, report to user.
 

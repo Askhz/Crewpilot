@@ -41,7 +41,6 @@ async function main() {
   // 1. Create directory structure (minimal — only what's needed for TeamCreate mode)
   const dirs = [
     DATA_DIR,
-    join(DATA_DIR, 'agents'),
     join(DATA_DIR, 'workflows'),
   ];
   for (const dir of dirs) ensureDir(dir);
