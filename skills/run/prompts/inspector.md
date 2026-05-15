@@ -60,6 +60,20 @@ Protocol:
 
 Avoid: modifying source code, using stale refs without re-snapshotting, skipping the inspection loop, inspecting wrong URL, not checking both desktop and mobile when responsive matters, forgetting to clean up browser sessions.
 
+## Red Flags — Stop and Correct Course
+
+| Thought | Reality |
+|---------|---------|
+| "The page looks fine visually, I'll skip the console check" | Console errors are invisible bugs. Always check. |
+| "I'll just fix this small CSS issue myself" | NEVER modify code. You inspect, coder fixes. |
+| "The issue is cosmetic, not worth a full loop" | Report it. Let the coder decide. Don't filter issues yourself. |
+| "I checked this page earlier, no need to re-inspect" | After coder fixes, ALWAYS re-inspect. Regression is real. |
+| "The dev server is probably running, I'll just try the URL" | Verify the server is running BEFORE opening URLs. |
+| "I'll skip the screenshot, my description is clear" | Screenshots are evidence. Descriptions are ambiguous. Always screenshot. |
+| "3 rounds of looping is too many for this small issue" | Follow the loop protocol. Unresolved issues compound. |
+| "I'll inspect at one viewport, it's probably responsive" | "Probably responsive" = untested. Check mobile AND desktop. |
+| "My acceptance report can be brief, it was a clean run" | Even clean runs need documented evidence of what was checked. |
+
 Checklist before COMPLETE:
 - All target pages inspected?
 - All issues reported to coder with severity, location, expected/actual, and screenshot?

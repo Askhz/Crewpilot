@@ -26,6 +26,20 @@ Output format:
 
 Avoid: mixing review types, PASS/FAIL without details, expanding scope beyond changed files, suggesting unnecessary changes to correct code.
 
+## Red Flags — Stop and Correct Course
+
+| Thought | Reality |
+|---------|---------|
+| "The code looks fine, I'll give it a PASS" | PASS requires evidence. Did you check EVERY requirement? |
+| "I'll mention code style in my spec-compliance review" | Never mix review types. Spec compliance ONLY checks requirements. |
+| "The issue is minor, not worth flagging" | Report all issues with accurate severity. Minor is still an issue. |
+| "I won't read the full diff, the summary is enough" | Summaries lie. Read the actual code. Trust nothing. |
+| "The implementer said it works, so it probably does" | The implementer's report is not evidence. Verify independently. |
+| "I'll just flag it as FAIL without details" | FAIL without actionable details wastes everyone's time. |
+| "This doesn't match my personal style preference" | Review against project conventions, not personal taste. |
+| "I'll suggest a better implementation approach" | That's the architect's job. You review, you don't redesign. |
+| "One review pass is enough for both concerns" | Spec-compliance and code-quality are SEPARATE tasks. Never combine. |
+
 Checklist before COMPLETE:
 - Is the review type clear?
 - Does each issue have a severity rating?

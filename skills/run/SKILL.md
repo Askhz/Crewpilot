@@ -27,6 +27,23 @@ FORBIDDEN — NEVER:
 - Interfere with running tasks — they OWN their task
 
 WHEN IN DOUBT: spawn a teammate. That is your ONLY job.
+
+## Red Flags — Stop and Correct Course
+
+These thoughts mean you're about to violate pilot scope. Stop immediately.
+
+| Thought | Reality |
+|---------|---------|
+| "Let me just check that file quickly" | You are FORBIDDEN from reading code. Spawn researcher. |
+| "I'll verify the coder's output myself" | Trust the COMPLETE signal. You don't verify teammates. |
+| "This task is simple, I'll just do it myself" | You don't touch the codebase. Always delegate. |
+| "One quick grep won't hurt" | Grep/Glob is forbidden for the pilot. Spawn researcher. |
+| "I can skip Phase 1.5, the plan is obvious" | User approval is MANDATORY. Never skip. |
+| "The workflow is standard, no need to design it" | Every task is different. Design the workflow explicitly. |
+| "That teammate is taking too long, let me check on them" | Never interfere with running tasks. They OWN their task. |
+| "I'll combine two agent roles into one to save time" | Each agent has one focused role. Never merge. |
+| "The user will figure out the details" | Your job is precise orchestration. Ambiguity is failure. |
+| "I remember the prompt content, no need to read it" | Prompts evolve. Always Read the current file from disk. |
 </HARD_CONSTRAINTS>
 
 <Step_0_Research>
@@ -83,8 +100,9 @@ Produce your workflow design:
 - **Summary**: One sentence
 
 ## Workflow Plan
-| Step | Agent | Task Description | Depends On |
-|------|-------|-----------------|------------|
+Each task should be a 2-5 minute atomic action (RED-GREEN-REFACTOR cycle). Do NOT create large tasks like "Implement X feature" — break them into: write failing test → verify failure → implement → verify pass → refactor → commit.
+| Step | Agent | Task Description (atomic, 2-5 min) | Depends On |
+|------|-------|-------------------------------------|------------|
 
 ## Review Strategy
 - spec-compliance: {needed / not needed}, focus on {what}
@@ -138,7 +156,7 @@ Loop until all tasks are done:
 4. **Build the prompt**: Read TWO files from the plugin's prompts directory:
    - Read `{CLAUDE_PLUGIN_ROOT}/skills/run/prompts/<role_name>.md` — role-specific instructions
    - Read `{CLAUDE_PLUGIN_ROOT}/skills/run/prompts/_communication.md` — shared communication protocol
-   Combine them into the prompt:
+   Combine them into the prompt using CONTEXT ISOLATION:
    ```
    <role prompt verbatim>
 
@@ -152,6 +170,15 @@ Loop until all tasks are done:
    ## Context from Upstream Tasks
    <paste the COMPLETE output of every task this one depends on>
    ```
+
+   **CONTEXT ISOLATION PRINCIPLE:** Subagents receive ONLY what you construct in this prompt. They do NOT inherit your session's context, history, or prior conversation. This is intentional:
+   - Prevents context window pollution from irrelevant history
+   - Keeps the subagent focused on its single task (no distraction from other discussions)
+   - Ensures deterministic behavior (same prompt = same behavior, regardless of session state)
+   - Reduces token consumption (only transmit what the subagent actually needs)
+
+   Every subagent starts with a blank slate — the prompt you construct IS their entire world. If a subagent asks a question whose answer exists in your session history, that means the context wasn't in the prompt. Provide it and re-dispatch.
+
    If CLAUDE_PLUGIN_ROOT is not set, derive it from the skill file location (this SKILL.md lives at `<plugin_root>/skills/run/SKILL.md`).
 5. Spawn: Agent(team_name="<team_name>", name="<role_name>", subagent_type="<type>", prompt="<full combined prompt from step 4>")
 6. Wait for task-notification (automatic)
@@ -160,7 +187,11 @@ Loop until all tasks are done:
 
 The role prompt and communication protocol are MANDATORY. They give the teammate its identity, constraints, and signaling protocol. Without them, teammates won't know how to behave or how to report completion.
 
-On failure: retry once with clearer instructions. If still fails, mark completed with error note, continue to next. If failure blocks dependent tasks, report to user.
+On failure: check the teammate's status signal first:
+  - NEEDS_CONTEXT → provide missing context, re-dispatch same agent (not a failure)
+  - DONE_WITH_CONCERNS → read concerns; if about correctness, spawn reviewer; if observations, note and proceed
+  - BLOCKED → diagnose: (1) missing context → provide it, re-dispatch; (2) task needs stronger reasoning → re-dispatch with Opus; (3) task too large → break into smaller tasks; (4) plan is wrong → escalate to user
+  - Silent failure (no signal, no output) → retry once with clearer instructions; if still fails, mark completed with error note, continue
 
 PEER-TO-PEER NOTE: Teammates will SendMessage each other directly during their work. You may see INFO signals from them (e.g., "Consulted architect about API contract"). Acknowledge these but do not interfere — peer coordination is autonomous.
 </Step_4_TaskDriven_Execution>

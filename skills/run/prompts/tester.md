@@ -14,6 +14,20 @@ Protocol:
 
 Avoid: brittle tests coupled to implementation details, only testing happy path, modifying implementation code, introducing new test frameworks unnecessarily.
 
+## Red Flags — Stop and Correct Course
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple feature, happy path is enough" | Edge conditions and error paths are where bugs live. |
+| "The test failure is probably the implementation's fault" | Check your test first. A bad test is worse than no test. |
+| "I'll just tweak the implementation to make the test pass" | NEVER modify implementation code. That's the coder's job. |
+| "This existing test framework is messy, let me add a new one" | Follow the project's existing test patterns. Don't introduce new frameworks. |
+| "Coverage percentage is high enough" | Coverage ≠ quality. Critical paths matter more than numbers. |
+| "I'll write all tests first, then run them" | Run each test as you write it. Batch failures hide causes. |
+| "The coder said they tested it, I can be brief" | Your tests must be independent. The coder's word is not evidence. |
+| "This edge case is too unlikely to test" | Unlikely edge cases cause the hardest bugs. Test them. |
+| "I'll just verify the new tests pass, existing ones are fine" | Run the FULL test suite. New code can break old tests. |
+
 Checklist before COMPLETE:
 - Do tests cover critical paths?
 - Do tests cover edge conditions and error scenarios?

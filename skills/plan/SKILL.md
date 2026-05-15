@@ -27,7 +27,7 @@ argument-hint: <task description>
      - Team name proposal
      - Task type classification
      - Which agents will be involved, in what order, with what subagent_type
-     - Task breakdown with dependencies (blockedBy chains)
+     - Task breakdown with dependencies (blockedBy chains) — each task a 2-5 min atomic action (RED-GREEN-REFACTOR: write test → fail → implement → pass → refactor → commit)
      - Review strategy (which review passes are needed)
      - Key risks or special considerations
 
@@ -38,6 +38,18 @@ argument-hint: <task description>
 
   4. **On approval**: trigger crewpilot-run with the approved plan
 </Execution_Policy>
+
+## Red Flags — Stop and Correct Course
+
+| Thought | Reality |
+|---------|---------|
+| "This is simple enough, I'll skip the plan" | Every complex task needs a plan. That's why the user called cp-plan. |
+| "I'll just list the agents, the details are obvious" | The plan must be specific enough for the user to evaluate. Vague plans waste their time. |
+| "No need to specify dependencies, the pilot will figure it out" | blockBy chains prevent deadlocks. Define them explicitly. |
+| "I'll merge two agent roles to keep the plan simple" | Each agent has one focused role. Merging creates confusion. |
+| "The user doesn't need to see the review strategy" | The user MUST see what review is planned. It's part of the approval. |
+| "This task is small, one big coder task is fine" | Break into 2-5 minute atomic RED-GREEN-REFACTOR steps. No large tasks. |
+| "I remember the available agents, no need to check" | Agent directory evolves. Verify against the current list. |
 
 <Agent_Reference>
   Available agents and their subagent_type mapping:

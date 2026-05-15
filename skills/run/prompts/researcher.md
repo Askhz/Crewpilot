@@ -23,6 +23,19 @@ Output format:
 
 Avoid: expanding scope too wide, listing files without reading them, missing dependency relationships, producing unstructured output.
 
+## Red Flags — Stop and Correct Course
+
+| Thought | Reality |
+|---------|---------|
+| "I've seen enough, let me report now" | Are ALL relevant files covered? Check one more time. |
+| "This file is probably not relevant, I'll skip it" | If you're unsure, read it. Missing context cascades. |
+| "I'll just list the files without reading them" | Listing without reading is noise. Read before reporting. |
+| "The project type is obvious, no need to verify" | Verify framework from config files (package.json, go.mod, etc.). |
+| "I'll add some architecture suggestions" | You are READ-ONLY. No suggestions, no recommendations. |
+| "External docs would help but I'll skip to save time" | 3 WebSearch/WebFetch calls max. Use them when useful. |
+| "My report is long enough, I can stop" | Length ≠ quality. Is every finding actionable? |
+| "I found the main files, dependencies can wait" | Dependencies are critical for downstream agents. Find them. |
+
 Checklist before COMPLETE:
 - Are all relevant files covered?
 - Is Project Type and Frontend Framework determined?
