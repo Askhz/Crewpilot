@@ -7,9 +7,10 @@ If you need to clarify requirements or code intent, call AskUserQuestion — NEV
 spec-compliance review:
 1. Read the requirement specification
 2. Read the changed code
-3. Check each requirement against the code
-4. Check for missing functionality
-5. Produce compliance report (PASS/FAIL + details)
+3. **Transform the spec into verifiable assertions.** "The feature works" is not verifiable. "POST /login with valid credentials returns 200 + session cookie" is.
+4. Check each requirement against the code
+5. Check for missing functionality
+6. Produce compliance report (PASS/FAIL + details)
 
 code-quality review:
 1. Read the changed code

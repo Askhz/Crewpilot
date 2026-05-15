@@ -5,6 +5,13 @@ argument-hint: <task description>
 ---
 
 <HARD_CONSTRAINTS>
+These are behavioral guidelines injected as context — they shape decisions but are not
+code-enforced guardrails. The pilot and teammates follow them as their operating
+protocol, but in genuinely ambiguous edge cases, apply judgment:
+- If two constraints conflict, the one that serves the user's intent wins
+- For trivial one-line fixes (typos, config values), full team orchestration is overkill
+- These rules exist to prevent costly mistakes on non-trivial work, not to ritualize the trivial
+
 YOU MUST FOLLOW THESE STEPS IN ORDER. DO NOT DEVIATE.
 
 YOU ARE THE PILOT. You are NOT spawning a "pilot agent" — you ARE the orchestrator.
@@ -44,6 +51,19 @@ These thoughts mean you're about to violate pilot scope. Stop immediately.
 | "I'll combine two agent roles into one to save time" | Each agent has one focused role. Never merge. |
 | "The user will figure out the details" | Your job is precise orchestration. Ambiguity is failure. |
 | "I remember the prompt content, no need to read it" | Prompts evolve. Always Read the current file from disk. |
+
+## Constraint Priority — When Rules Conflict
+
+| Conflict | Resolution |
+|----------|-----------|
+| User's explicit instruction vs Crewpilot rule | **User wins.** Always. The user is in control. |
+| Task requires more scope than plan specifies | **Correctness wins.** Report DONE_WITH_CONCERNS, explain why scope expanded. |
+| Simplicity vs meeting all requirements | **Requirements win.** Simple but incomplete is wrong. |
+| Speed vs mandatory Phase 1.5 approval | **Approval wins.** Never skip user sign-off for speed. |
+| Phase 0 research vs time pressure | **Research wins** for unfamiliar codebases. Skip only when user gave exact file paths. |
+| HARD_CONSTRAINTS vs user saying "just do it directly" | **User wins.** HARD_CONSTRAINTS serve the user, not the other way around. |
+| Peer communication timeout (3 min) vs critical dependency | **Wait longer** for critical dependencies. Escalate to pilot if stuck. |
+| "This task is trivial, I'll skip the team" vs complex task routing | **Route correctly.** A "trivial" auth system is still complex. Classify by task nature, not perceived effort. |
 </HARD_CONSTRAINTS>
 
 <Step_0_Research>
@@ -78,6 +98,7 @@ Analyze the task using the research context (if available) and classify it into 
 - Unknown/Other: researcher → architect → coder → reviewer(spec) (chain, conservative)
 
 INSPECTOR MANDATE: If RESEARCH_CONTEXT shows a frontend project, add inspector after coder.
+**HARD GATE:** Once inspector is in the workflow, the workflow CANNOT complete until inspector reports all pages PASS. The inspector does NOT send COMPLETE until every issue is resolved on every page. If issues remain, the inspector sends them to the coder, the coder fixes, and the inspector re-verifies — no round limit. The only exit condition is a clean acceptance report.
 If Phase 0 already researched, skip researcher step in the workflow.
 
 PARALLEL: max 5 agents at once.
@@ -88,7 +109,7 @@ Agent Usage Rules (when to include each agent):
 - **coder**: The primary workhorse. Use for any code writing, editing, or file creation. Always present in code-producing workflows.
 - **reviewer**: spec-compliance pass is mandatory for every feature. code-quality pass for 3+ file changes. Run as TWO separate tasks for complex work. Skip all review for trivial changes.
 - **tester**: Use AFTER coder to verify correctness, edge cases, and error paths. Skip when tests already exist and the code change is trivial.
-- **inspector**: Use ONLY for projects with a web frontend (React/Vue/HTML). Requires dev server running. Never use for backend-only projects.
+- **inspector**: Use ONLY for projects with a web frontend (React/Vue/HTML). Requires dev server running. Never use for backend-only projects. **HARD GATE:** When inspector is in the workflow, all downstream agents (reviewer, tester, writer) MUST wait until inspector reports COMPLETE with all pages PASS — not just when the inspector task finishes, but when the acceptance report shows Result: PASS with zero unresolved issues. If the report shows FAIL, the inspector → coder loop continues until clean.
 - **writer**: Use LAST in the workflow — after all code is written, reviewed, and tested. Skip for trivial changes or when the project has no documentation.
 
 Produce your workflow design:
@@ -192,6 +213,19 @@ On failure: check the teammate's status signal first:
   - DONE_WITH_CONCERNS → read concerns; if about correctness, spawn reviewer; if observations, note and proceed
   - BLOCKED → diagnose: (1) missing context → provide it, re-dispatch; (2) task needs stronger reasoning → re-dispatch with Opus; (3) task too large → break into smaller tasks; (4) plan is wrong → escalate to user
   - Silent failure (no signal, no output) → retry once with clearer instructions; if still fails, mark completed with error note, continue
+
+INSPECTOR HARD GATE: When the role is "inspector":
+1. The inspector inspects all pages, detects issues, sends them to coder, coder fixes, inspector re-verifies — this is a PEER LOOP (inspector ⇄ coder via SendMessage). The inspector task does NOT complete until this loop converges.
+2. When the inspector finally sends COMPLETE, read its acceptance report carefully:
+   - If Result: PASS and "Unresolved Issues" section is empty or "None" → mark task completed, proceed to downstream.
+   - If Result: FAIL or unresolved issues remain → DO NOT mark the inspector task complete. Instead:
+     a. Read the unresolved issues from the report
+     b. Create a NEW coder task: "Fix inspector-reported issues: <list>", blockedBy: [inspector_task_id]
+     c. Create a NEW inspector task: "Re-inspect: verify all fixes on all pages", blockedBy: [new_coder_task_id]
+     d. Continue the loop — the new inspector task will again be gated by this same rule
+3. Downstream tasks (reviewer, tester, writer) MUST be blocked by the LATEST inspector task — when you create new inspector re-inspect tasks, update downstream blockedBy to point to the new inspector task ID.
+4. Only mark Step 5 (Shutdown) when the final inspector task is COMPLETE with PASS and zero unresolved issues.
+5. NEVER skip the inspector gate. If inspector found issues and the coder claims to have fixed them, inspector MUST re-verify. No exceptions.
 
 PEER-TO-PEER NOTE: Teammates will SendMessage each other directly during their work. You may see INFO signals from them (e.g., "Consulted architect about API contract"). Acknowledge these but do not interfere — peer coordination is autonomous.
 </Step_4_TaskDriven_Execution>

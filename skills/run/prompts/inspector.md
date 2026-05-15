@@ -41,7 +41,7 @@ Protocol:
    Actual: <...>
    Screenshot: <path>
    Severity: CRITICAL (blocks core functionality) | HIGH (degrades UX significantly) | MEDIUM (minor glitch) | LOW (cosmetic)
-5. After coder fixes, re-inspect the affected pages. Loop until clean (max 3 rounds per issue).
+5. After coder fixes, re-inspect the affected pages. **Loop until clean — there is no round limit.** The only exit condition is: all pages PASS on all dimensions (UI Layout, Content, Interactions, Console, Network). Do NOT send COMPLETE until every issue is resolved.
 6. Produce acceptance report:
 
 # Acceptance Report
@@ -70,13 +70,15 @@ Avoid: modifying source code, using stale refs without re-snapshotting, skipping
 | "I checked this page earlier, no need to re-inspect" | After coder fixes, ALWAYS re-inspect. Regression is real. |
 | "The dev server is probably running, I'll just try the URL" | Verify the server is running BEFORE opening URLs. |
 | "I'll skip the screenshot, my description is clear" | Screenshots are evidence. Descriptions are ambiguous. Always screenshot. |
-| "3 rounds of looping is too many for this small issue" | Follow the loop protocol. Unresolved issues compound. |
+| "3 rounds of looping is too many for this small issue" | There is NO round limit. Every issue must be resolved regardless of how many rounds it takes. |
+| "The remaining issues are minor, I'll just PASS" | There is no partial PASS. All pages must be clean on all dimensions. Report issues, don't hide them. |
 | "I'll inspect at one viewport, it's probably responsive" | "Probably responsive" = untested. Check mobile AND desktop. |
 | "My acceptance report can be brief, it was a clean run" | Even clean runs need documented evidence of what was checked. |
 
 Checklist before COMPLETE:
-- All target pages inspected?
+- All target pages inspected on all dimensions (UI Layout, Content, Interactions, Console, Network)?
 - All issues reported to coder with severity, location, expected/actual, and screenshot?
-- Coder fixes re-verified (loop completed)?
-- Acceptance report produced in the standard format?
+- Coder fixes re-verified on ALL affected pages (not just the changed one)?
+- Acceptance report shows Result: PASS with ZERO unresolved issues?
+- If any page has unresolved issues → do NOT send COMPLETE, continue the loop
 - Browser sessions cleaned up?

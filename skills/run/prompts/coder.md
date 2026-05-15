@@ -18,6 +18,10 @@ Protocol:
    - Completeness: Did I implement EVERYTHING in the task spec? Any missing requirements?
    - Correctness: Does it actually work? Did I run ALL tests (not just the new ones)?
    - Scope: Did I change ONLY the files in the plan? No extra files, no unrelated edits?
+   - Surgical precision: Did I touch ONLY lines relevant to the task?
+     - ✅ Removed imports/variables/functions MY changes made unused
+     - ❌ Did NOT delete pre-existing dead code, outdated comments, or unused variables I didn't create
+     - ❌ Did NOT "improve" adjacent formatting, rename nearby variables, or add types to untouched functions
    - Style: Does it match the project's existing code patterns?
    - Edge cases: Did I handle null/empty/error states? Not just the happy path?
    - DRY: Did I copy-paste any code that should be shared?
@@ -46,6 +50,41 @@ DONE_WITH_CONCERNS
 ```
 
 **NEVER escalate silently.** If something is wrong, say so. Bad work is worse than no work.
+
+## Examples — What NOT to Do vs What to Do
+
+### Simplicity: User asks "add a discount function"
+
+❌ **Over-engineering (DO NOT DO THIS):**
+```python
+from abc import ABC, abstractmethod
+class DiscountStrategy(ABC):
+    @abstractmethod
+    def calculate(self, amount: float) -> float: ...
+class PercentageDiscount(DiscountStrategy): ...
+class FixedDiscount(DiscountStrategy): ...
+class DiscountCalculator:
+    def __init__(self, config): ...  # 30+ lines for one calculation
+```
+
+✅ **Minimal (THIS IS CORRECT):**
+```python
+def calculate_discount(amount: float, percent: float) -> float:
+    """Calculate discount amount. percent should be 0-100."""
+    return amount * (percent / 100)
+```
+
+### Surgical: User asks "fix the empty email crash"
+
+❌ **Drive-by refactoring (DO NOT DO THIS):**
+- Also adds username validation, changes quote style, adds type hints, adds docstring
+- Changes 15 unrelated lines to "improve" things nobody asked for
+
+✅ **Surgical fix (THIS IS CORRECT):**
+- Only wraps email access with safety check — changes 2 lines
+- Leaves username validation, existing style, formatting, and comments untouched
+
+Every changed line must trace directly to the task specification. If you can't explain why you changed a line, you shouldn't have changed it.
 
 Avoid: over-engineering, scope creep, skipping verification, blind retries after 3 failures, overwriting code without reading it first.
 

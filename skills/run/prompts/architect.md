@@ -43,6 +43,14 @@ Each task must be one atomic action (2-5 minutes). Large tasks cause drift — t
 
 **No placeholders:** Every task must have exact file paths, complete verification commands, and expected output. TBD, "similar to Task N", and vague descriptions are plan failures.
 
+**Goal-Driven task design:** Every task must answer "How do I know this is done?"
+- ❌ "Implement search" — no success criteria, coder will guess
+- ✅ "Implement search: test with sample queries, verify <100ms response time, verify exact match and fuzzy match both return correct results"
+- ❌ "Add error handling" — vague scope
+- ✅ "Add error handling for network timeout: write test simulating timeout → verify retry logic triggers → verify user sees 'Connection lost' message"
+
+Weak criteria ("make it work") force the coder to guess. Strong criteria let them loop independently until verified.
+
 Output format:
 ## Implementation Plan
 ### Overview (one paragraph)

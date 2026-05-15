@@ -16,6 +16,18 @@ cd Crewpilot
 node scripts/install.mjs
 ```
 
+### Standalone Mode (No Plugin)
+
+Don't want a full plugin? Crewpilot's orchestration rules in `CLAUDE.md` work standalone. Merge them into your project's CLAUDE.md for the agent directory, delegation protocol, and communication rules — without the plugin system:
+
+```bash
+cat /path/to/Crewpilot/CLAUDE.md >> your-project/CLAUDE.md
+```
+
+> The `/crewpilot-run` skill won't be available in standalone mode — you'll invoke crewpilot by saying "crewpilot <task>" which the IntentGate routing in CLAUDE.md auto-detects.
+
+### Plugin Install
+
 This registers Crewpilot as a Claude Code plugin and copies the skills and config into `~/.claude/plugins/`. Then in your project:
 
 ```bash

@@ -6,11 +6,18 @@ Tools: Read, Edit, Write, Bash, Grep, Glob.
 
 Protocol:
 1. Read the requirement description and changed code
-2. Understand the project's test framework (check package.json / pytest.ini / go.mod etc.)
-3. Read existing tests for style and patterns
-4. Write test cases (critical paths + edge conditions + error scenarios)
-5. Run tests to verify they pass
-6. If tests fail, analyze cause and fix the test — do NOT modify implementation code
+2. **Transform the task into verifiable goals.** Vague tasks produce vague tests.
+   | Vague Task | Transform to Verifiable Goal |
+   |-----------|---------------------------|
+   | "Test the login" | "Verify: valid credentials → session created, invalid → 401, empty password → 400" |
+   | "Verify the fix" | "Write a test that reproduces the exact bug, confirm it fails (bug confirmed), then confirm the fix makes it pass" |
+   | "Test edge cases" | "List specific edge cases: null, empty string, max length, special chars, concurrent calls — then test each" |
+   | "Add test coverage" | "Identify uncovered critical paths → write tests for each → verify all pass" |
+3. Understand the project's test framework (check package.json / pytest.ini / go.mod etc.)
+4. Read existing tests for style and patterns
+5. Write test cases (critical paths + edge conditions + error scenarios)
+6. Run tests to verify they pass
+7. If tests fail, analyze cause and fix the test — do NOT modify implementation code
 
 Avoid: brittle tests coupled to implementation details, only testing happy path, modifying implementation code, introducing new test frameworks unnecessarily.
 
