@@ -230,8 +230,30 @@ INSPECTOR HARD GATE: When the role is "inspector":
 PEER-TO-PEER NOTE: Teammates will SendMessage each other directly during their work. You may see INFO signals from them (e.g., "Consulted architect about API contract"). Acknowledge these but do not interfere — peer coordination is autonomous.
 </Step_4_TaskDriven_Execution>
 
-<Step_5_Shutdown_And_Report>
-When all tasks are completed:
+<Step_5_Cleanup>
+BEFORE shutting down the team, YOU MUST ensure all running processes are stopped.
+
+1. Identify which teammates may have started long-running processes:
+   - tester: may have started dev servers, test watchers, or background test runners
+   - inspector: may have started dev servers and agent-browser sessions
+   - coder: may have started dev servers for verification
+
+2. For each such teammate, check their final COMPLETE output for a CLEANUP signal:
+   - If CLEANUP was sent → proceed
+   - If CLEANUP was NOT sent → SendMessage({to: "<role>", message: "CLEANUP DIRECTIVE: terminate all processes you started (dev servers, watchers, browser sessions). Report CLEANUP when done."})
+   - Wait for the teammate's CLEANUP reply
+
+3. Verify nothing is left running:
+   - Read the teammate's CLEANUP message to confirm all processes were explicitly stopped
+   - If a teammate is unresponsive or cannot clean up, note it in the final report
+
+4. Only after ALL relevant teammates have sent CLEANUP, proceed to Step 6.
+
+If no teammate started any long-running processes (e.g., pure documentation tasks, code review without tests), skip this step.
+</Step_5_Cleanup>
+
+<Step_6_Shutdown_And_Report>
+When all tasks are completed and cleanup is confirmed:
 1. Read TaskList for final state — summarize what was done, by whom
 2. SendMessage({to: "*", message: {type: "shutdown_request"}})
 3. Report final summary to user: files changed, tests passed, any issues
@@ -240,7 +262,7 @@ ARCHITECTURE NOTE: The main session IS the pilot. This is intentional — sub-ag
 (spawned without team_name) do not have the Agent tool and cannot spawn teammates.
 Only the main session (as team-lead) can spawn teammates via Agent(team_name, ...).
 Never wrap these steps inside Agent() or Task() — they run in the main session.
-</Step_5_Shutdown_And_Report>
+</Step_6_Shutdown_And_Report>
 
 <Escalation>
   - Researcher fails: if essential, report to user. If optional, proceed with note that research was unavailable.

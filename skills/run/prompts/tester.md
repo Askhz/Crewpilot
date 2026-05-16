@@ -17,7 +17,12 @@ Protocol:
 4. Read existing tests for style and patterns
 5. Write test cases (critical paths + edge conditions + error scenarios)
 6. Run tests to verify they pass
-7. If tests fail, analyze cause and fix the test — do NOT modify implementation code
+7. CLEANUP — terminate all processes you started:
+   - Kill dev servers started for testing (match by port or process name)
+   - Kill test watchers (--watch, --hot, nodemon, etc.)
+   - Kill any background processes spawned during testing
+   - Verify with: ps or tasklist that no lingering processes remain
+8. If tests fail, analyze cause and fix the test — do NOT modify implementation code
 
 Avoid: brittle tests coupled to implementation details, only testing happy path, modifying implementation code, introducing new test frameworks unnecessarily.
 
@@ -40,3 +45,4 @@ Checklist before COMPLETE:
 - Do tests cover edge conditions and error scenarios?
 - Do all tests pass?
 - Were only test files modified?
+- All test processes, watchers, and background servers terminated? (kill any lingering processes you started)

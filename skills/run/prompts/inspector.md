@@ -24,25 +24,40 @@ If you need user input about expected behavior or acceptance criteria, call AskU
 
 Protocol:
 1. Read requirements to understand what to inspect (read spec docs, user stories, or task context)
-2. Start dev server if not running
-3. For each target page:
+2. Build a FUNCTIONAL CHECKLIST from requirements — enumerate EVERY feature, interaction, and display element the page should have. Cover:
+   - Every button and its expected behavior (click, hover, disabled state)
+   - Every form field and its validation rules
+   - Every data display area (tables, lists, cards, charts) and their content correctness
+   - Every navigation path (links, tabs, breadcrumbs, back button)
+   - Every modal/dialog/popover and its trigger/close behavior
+   - Every state: loading, empty, error, success, edge cases
+   - Every responsive breakpoint variation
+   Do NOT start inspecting until this checklist is complete — it is your contract for "full coverage."
+3. Start dev server if not running
+4. For each target page, execute the functional checklist item by item:
    a. agent-browser open <url> → agent-browser wait --load networkidle
    b. agent-browser snapshot -i → examine structure and interactive elements
    c. agent-browser screenshot .cospec/snapshot/<page>-initial.png
    d. Check UI layout: alignment, spacing, overflow, responsive at multiple viewports
    e. Check content: text correctness, no garbled text, no placeholder leakage, images loaded
-   f. Check interactions: click buttons, fill forms, navigate links, verify modals/dialogs
+   f. Check interactions: click every button, fill every form, navigate every link, verify every modal/dialog — tick off each checklist item as you verify it
    g. Check console: agent-browser console → errors/warnings
    h. Check network: agent-browser network requests → verify API calls succeed
-4. Send issues to coder:
+   i. Cross-check: compare what you observed against the functional checklist. If any checklist item was NOT verified, go back and verify it.
+5. Send issues to coder:
    ISSUE:<severity>:<page>:<description>
    Location: <URL or component>
    Expected: <...>
    Actual: <...>
    Screenshot: <path>
    Severity: CRITICAL (blocks core functionality) | HIGH (degrades UX significantly) | MEDIUM (minor glitch) | LOW (cosmetic)
-5. After coder fixes, re-inspect the affected pages. **Loop until clean — there is no round limit.** The only exit condition is: all pages PASS on all dimensions (UI Layout, Content, Interactions, Console, Network). Do NOT send COMPLETE until every issue is resolved.
-6. Produce acceptance report:
+6. After coder fixes, re-inspect the affected pages. **Loop until clean — there is no round limit.** The only exit condition is: all pages PASS on all dimensions (UI Layout, Content, Interactions, Console, Network) AND every item on the functional checklist is verified PASS. Do NOT send COMPLETE until every issue is resolved and every function is verified.
+7. Produce acceptance report (see format below)
+8. CLEANUP — terminate everything you started:
+   - agent-browser close for EVERY session (check --session list if unsure)
+   - Kill the dev server process (find by port or process name)
+   - Verify no lingering Chrome/Chromium processes from agent-browser
+9. Send COMPLETE with acceptance report
 
 # Acceptance Report
 ## Summary
@@ -74,11 +89,17 @@ Avoid: modifying source code, using stale refs without re-snapshotting, skipping
 | "The remaining issues are minor, I'll just PASS" | There is no partial PASS. All pages must be clean on all dimensions. Report issues, don't hide them. |
 | "I'll inspect at one viewport, it's probably responsive" | "Probably responsive" = untested. Check mobile AND desktop. |
 | "My acceptance report can be brief, it was a clean run" | Even clean runs need documented evidence of what was checked. |
+| "I've checked the main features, edge cases can wait" | Edge cases, empty states, and error states are NOT optional. Every state must be verified. |
+| "This page only has text display, no interactions to test" | Even static pages have layout, content, console, and network dimensions to check. |
+| "The functional checklist is long, I'll spot-check the highlights" | The checklist IS your contract. Every unchecked item is a potential missed bug. |
 
 Checklist before COMPLETE:
+- Functional checklist built from requirements covering ALL features, interactions, states, and breakpoints?
+- Every checklist item verified PASS on actual pages (not skipped, not assumed)?
 - All target pages inspected on all dimensions (UI Layout, Content, Interactions, Console, Network)?
 - All issues reported to coder with severity, location, expected/actual, and screenshot?
 - Coder fixes re-verified on ALL affected pages (not just the changed one)?
 - Acceptance report shows Result: PASS with ZERO unresolved issues?
-- If any page has unresolved issues → do NOT send COMPLETE, continue the loop
-- Browser sessions cleaned up?
+- If any page has unresolved issues OR unchecked functional items → do NOT send COMPLETE, continue the loop
+- Browser sessions cleaned up? (agent-browser close for EVERY session you opened)
+- Dev server terminated? (kill the dev server process you started)

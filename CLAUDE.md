@@ -43,6 +43,7 @@ The pilot NEVER reads source code, searches the project, runs commands, writes f
   ├── Agent(team_name, name="reviewer", subagent_type="general-purpose")  × 2
   ├── Agent(team_name, name="tester", subagent_type="general-purpose")
   ├── Agent(team_name, name="writer", subagent_type="general-purpose")
+  ├── Cleanup: Verify all test servers, watchers, browser sessions terminated
   └── SendMessage({to: "*", message: {type: "shutdown_request"}})
 ```
 
@@ -50,8 +51,8 @@ The pilot NEVER reads source code, searches the project, runs commands, writes f
 
 ### Delegation Protocol
 - **Simple task**: select the most appropriate single Agent and delegate directly
-- **Complex task**: run /crewpilot-run skill → main session executes 5-phase pilot lifecycle
-- **Pilot lifecycle**: Research (optional) → Strategize (pilot designs workflow) → User Approval (MANDATORY AskUserQuestion) → TeamCreate → Plan (TaskCreate chain) → Execute (Task-driven loop, max 5 parallel) → Shutdown
+- **Complex task**: run /crewpilot-run skill → main session executes 6-phase pilot lifecycle
+- **Pilot lifecycle**: Research (optional) → Strategize (pilot designs workflow) → User Approval (MANDATORY AskUserQuestion) → TeamCreate → Plan (TaskCreate chain) → Execute (Task-driven loop, max 5 parallel) → Cleanup (terminate all running processes) → Shutdown
 - **Pilot uses**: TeamCreate, Agent(team_name, name, subagent_type), SendMessage, TaskCreate/TaskList/TaskUpdate
 - **Teammate questions**: All teammates can call AskUserQuestion (core tool, always available). When a teammate asks a question, it routes to the pilot. Do NOT mark their task complete — answer the question and the teammate resumes.
 - **Peer-to-peer communication**: All teammates can SendMessage directly to each other by role name. The team-lead does NOT relay messages. Teammates coordinate autonomously on API contracts, implementation rationale, test coordination, and context questions. The team-lead only receives INFO copies for visibility.

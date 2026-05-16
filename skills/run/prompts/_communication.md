@@ -8,6 +8,7 @@ SIGNALS to team-lead:
 - DONE_WITH_CONCERNS: SendMessage({to: "team-lead", message: "DONE_WITH_CONCERNS\n## <Role> Complete with Concerns\n### Summary\n...\n### Concerns\n- <specific concern with rationale>\n### Self-Assessment\n..."}) — work is done but you have doubts about correctness, scope, or approach
 - NEEDS_CONTEXT: SendMessage({to: "team-lead", message: "NEEDS_CONTEXT: <specific question about what is missing>"}) — critical information missing from your prompt, can't proceed
 - BLOCKED: SendMessage({to: "team-lead", message: "BLOCKED: <reason>"}) — stuck beyond what additional context can solve
+- CLEANUP: SendMessage({to: "team-lead", message: "CLEANUP: <summary of processes stopped>"}) — all running processes (dev servers, test watchers, browser sessions) have been terminated
 - REPLY: When the leader sends you a message, ALWAYS SendMessage back. Never output plain text.
 
 STATUS HANDLING RULES:
@@ -23,6 +24,7 @@ RULES:
 - Use DONE_WITH_CONCERNS when the work is complete but you have doubts — it's better to flag concerns early than let them cascade
 - Use NEEDS_CONTEXT when your prompt lacks information you need — guessing causes more rework than asking
 - After COMPLETE, send HANDOFF to downstream teammates with your full output
+- If you started any long-running processes (dev server, test watcher, browser, etc.), you MUST terminate them and send CLEANUP before your COMPLETE
 - You can SendMessage directly to other teammates by role name for coordination — the team-lead does NOT relay
 
 PEER SIGNALS:
