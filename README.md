@@ -237,8 +237,6 @@ Crewpilot/
 │   │       ├── writer.md
 │   │       └── _communication.md  # Shared communication protocol
 │   └── plan/SKILL.md          # /crewpilot-plan — plan preview, no execution
-├── presets/
-│   └── config.default.yaml    # IntentGate rules, keyword routing, model tiers
 ├── scripts/
 │   ├── install.mjs            # npx crewpilot install
 │   ├── init-project.mjs       # npx crewpilot init
@@ -253,11 +251,7 @@ Crewpilot/
 
 ## Configuration
 
-Crewpilot is configured through `presets/config.default.yaml`, copied to your project's `.crewpilot/config.yaml` on `init`:
-
-- **IntentGate**: maps keywords (build, fix, explain, review, refactor, list) to routing (complex → team, simple → solo agent)
-- **Keywords**: priority-based trigger patterns (`crewpilot-plan` at priority 10, `crewpilot` at priority 5)
-- **Model Tiers**: maps agent roles to Claude model tiers (Haiku for writer, Sonnet for standard roles, Opus for thorough roles like architect and pilot)
+All routing and behavior rules are defined inline in [CLAUDE.md](CLAUDE.md) — IntentGate classification, keyword priority routing, and agent directory. No external config file is needed.
 
 ## Design Principles
 

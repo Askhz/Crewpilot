@@ -41,7 +41,7 @@ function writeJSON(filePath, data) {
 function copyPluginContent(destDir) {
   ensureDir(destDir);
 
-  const DIRS_TO_COPY = ['.claude-plugin', 'skills', 'presets'];
+  const DIRS_TO_COPY = ['.claude-plugin', 'skills'];
   const FILES_TO_COPY = ['CLAUDE.md'];
 
   for (const dirName of DIRS_TO_COPY) {

@@ -45,13 +45,7 @@ async function main() {
   ];
   for (const dir of dirs) ensureDir(dir);
 
-  // 2. Copy config.yaml from presets (if not exists)
-  copyIfMissing(
-    join(REPO_ROOT, 'presets', 'config.default.yaml'),
-    join(DATA_DIR, 'config.yaml')
-  );
-
-  // 3. Write index.json (if not exists)
+  // 2. Write index.json (if not exists)
   const indexPath = join(DATA_DIR, 'index.json');
   writeIfMissing(indexPath, JSON.stringify({
     version: 2,
