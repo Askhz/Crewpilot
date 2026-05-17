@@ -1,8 +1,30 @@
 ---
 name: crewpilot-run
-description: "Use when the user wants to execute a complex task using multi-agent orchestration. Triggers on keywords: crewpilot"
+description: |
+  Multi-agent orchestration for complex software engineering tasks. Transforms a single
+  Claude Code session into a team of 8 specialized agents (researcher, architect, coder,
+  reviewer × 2, tester, inspector, writer) orchestrated by a pilot.
+  Use when: user says "crewpilot <task>", "build X", "create Y", "fix Z", "refactor W",
+  "review the code", or describes any complex multi-file task.
+  Proactively invoke when: the user describes a task spanning 3+ files, introduces new
+  abstractions, touches multiple layers (frontend + backend), or asks for something that
+  needs review + testing + docs — not just a single command or explanation.
+  Do NOT use for: simple questions ("what does X do"), single-line fixes, config changes,
+  or tasks the user explicitly says are trivial.
 argument-hint: <task description>
 ---
+
+## Crewpilot Core Philosophy
+
+**Task economy, never at the cost of correctness.** Crewpilot's design principles:
+
+1. **Right-size the team for the task.** A team of 8 for a config change is waste. A solo coder for a full-stack feature is negligence. Crewpilot adapts — the pilot skips roles that don't add value and adds roles (like inspector) only when the task genuinely needs them.
+
+2. **Completeness is cheap, incompleteness is expensive.** AI-assisted coding makes the marginal cost of doing the complete thing near-zero. The review pass that catches a bug? Seconds. The test that prevents a regression? Seconds. The doc that saves future-you hours of confusion? Seconds. Always err on the side of completeness.
+
+3. **Orchestration over execution.** The pilot never touches source code — not because it can't, but because separation of concerns is the whole point. The pilot designs, delegates, and trusts. Teammates own their work end-to-end. This isn't a limitation; it's the architecture that prevents the "solo agent degradation" problem.
+
+4. **Verification is mandatory, not optional.** Every teammate has a checklist. Every task has a completion signal. Inspector is a hard gate for frontend work. Review is two-pass for complex changes. "Looks good" is never a completion criterion — evidence is.
 
 <HARD_CONSTRAINTS>
 These are behavioral guidelines injected as context — they shape decisions but are not
@@ -65,6 +87,16 @@ These thoughts mean you're about to violate pilot scope. Stop immediately.
 | Peer communication timeout (3 min) vs critical dependency | **Wait longer** for critical dependencies. Escalate to pilot if stuck. |
 | "This task is trivial, I'll skip the team" vs complex task routing | **Route correctly.** A "trivial" auth system is still complex. Classify by task nature, not perceived effort. |
 </HARD_CONSTRAINTS>
+
+<Step_-1_Preamble>
+Before beginning the main lifecycle, run these preflight checks:
+
+1. **Learnings check**: Check if `.crewpilot/index.json` exists in the project. If it does, read the `learnings` array. For any learning matching this task's domain (similar agent, similar file patterns, similar error types), load them as context. Share the most relevant ones in the Phase 1 workflow design as "Past learnings to incorporate."
+
+2. **Config check**: Verify `.crewpilot/index.json` is present. If missing, tell the user: "Crewpilot hasn't been initialized in this project yet. Run `node /path/to/Crewpilot/scripts/init-project.mjs` to set up the runtime directory." Skip the rest of the lifecycle — do not proceed without the runtime directory.
+
+3. **Clean shutdown check**: If `.crewpilot/index.json` has `activeWorkflow` set (a workflow that was started but never completed — missing `completedAt`), warn the user: "Crewpilot detected an incomplete workflow from <timestamp>. Continuing will overwrite it." Proceed only after user confirms.
+</Step_-1_Preamble>
 
 <Step_0_Research>
 DECIDE whether research is needed based ONLY on the task description — do NOT read source files or run commands to decide:
@@ -257,6 +289,12 @@ When all tasks are completed and cleanup is confirmed:
 1. Read TaskList for final state — summarize what was done, by whom
 2. SendMessage({to: "*", message: {type: "shutdown_request"}})
 3. Report final summary to user: files changed, tests passed, any issues
+4. Record learnings: Append key observations to `.crewpilot/index.json` learnings array. For each agent that produced a notable outcome:
+   - DONE_WITH_CONCERNS → record as a learning (category: "pitfall", severity: "important")
+   - Repeated failures before success → record as a learning (category: "tip", severity: "critical")
+   - Reviewer found critical issues → record as a learning (category: "pattern", severity: "critical")
+   - Unexpected dependency discovered → record as a learning (category: "dependency", severity: "minor")
+   Update `updatedAt` timestamp. Maximum 5 learnings per run — prioritize critical over minor.
 
 ARCHITECTURE NOTE: The main session IS the pilot. This is intentional — sub-agents
 (spawned without team_name) do not have the Agent tool and cannot spawn teammates.

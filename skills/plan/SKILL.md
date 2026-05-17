@@ -1,6 +1,14 @@
 ---
 name: crewpilot-plan
-description: "Use when the user wants to plan a task without executing it. Triggers on keywords: cp-plan, crewpilot-plan"
+description: |
+  Preview a multi-agent workflow before execution. Shows which agents will be involved,
+  task breakdown, dependency chain, and review strategy — without spawning any teammates.
+  Use when: user says "cp-plan <task>", "crewpilot-plan <task>", "show me the plan first",
+  "just plan", "give me a proposal", or wants to review the approach before committing.
+  Proactively invoke when: the user seems uncertain about scope, asks "how would you
+  approach this", wants to compare alternatives, or says "what's the plan" before starting.
+  Do NOT use for: tasks where the user clearly wants direct execution ("just do it",
+  "build X now", "fix Y immediately"), or trivial questions.
 argument-hint: <task description>
 ---
 

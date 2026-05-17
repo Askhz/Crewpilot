@@ -53,6 +53,15 @@ async function main() {
     workflows: [],
     agents: [],
     recentTasks: [],
+    learnings: [],
+    // learnings structure per entry:
+    // { timestamp, workflowId, agent, category, lesson, severity }
+    //   - timestamp: ISO string when the learning was recorded
+    //   - workflowId: "crew-<slug>" this learning belongs to
+    //   - agent: which agent role recorded it (researcher/architect/coder/...)
+    //   - category: "pattern" | "pitfall" | "tip" | "dependency"
+    //   - lesson: one-sentence actionable insight
+    //   - severity: "critical" | "important" | "minor"
   }, null, 2));
 
   console.log('\n✅ Crewpilot initialized successfully!');
