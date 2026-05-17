@@ -1,267 +1,161 @@
 # Crewpilot
 
-> Team-based multi-agent orchestration for Claude Code. Turn one AI into a team of eight.
+> Turn one Claude Code session into a team of specialized agents. Research, plan, code, review, test, inspect, document — all orchestrated, all automatic.
 
-When you ask a coding agent to "build a feature", it jumps in alone — reads files, writes code, runs tests, all in a single thread. For simple tasks this works fine. But when the task spans 5+ files, touches multiple layers, and needs review, testing, and docs — a solo agent gets sloppy. It skips steps. It loses context. It ships bugs.
+<p align="center">
+  <b>English</b> · <a href="README_zh.md">中文</a>
+</p>
 
-**Crewpilot fixes this.** It transforms Claude Code into a coordinated team of specialized agents — researcher, architect, coder, reviewer, tester, inspector, writer — each focused on their role, each in their own sandbox, orchestrated by a pilot that manages the entire mission. You describe what you want, the pilot designs the workflow and dispatches teammates, and you get back a fully reviewed, tested, documented result.
+---
 
-Built on Claude Code's [TeamCreate API](https://claude.ai/code), Crewpilot is a plugin — not a framework, not a new tool, not something you have to learn. Install it, say `crewpilot <task>`, and your AI agent becomes a team.
+### The Problem
+
+You ask a coding agent to "build user authentication." It opens a file, writes some code, maybe adds a test, and calls it done. But what actually happened?
+
+- It never researched how your existing auth middleware works — so it duplicated half of it
+- It didn't have an architect think through session management — so refresh tokens silently break after 15 minutes
+- Nobody reviewed the code before it shipped — SQL injection in the password reset flow
+- The "test" it wrote only checks the happy path — empty passwords crash the validator
+- There's no documentation — good luck to whoever maintains this next month
+- And nobody opened a browser to check if the login page actually renders
+
+**Solo agents skip steps.** Not because they're bad — because they lose context. After file #5, they forget what file #1 needed. After 20 tool calls, their attention degrades. The result: code that looks right but crumbles under real use.
+
+### The Difference
+
+| Without Crewpilot | With Crewpilot |
+|---|---|
+| One agent, one thread, no memory | A team of specialists, isolated context, structured handoffs |
+| Skips research — dives straight into code | Researcher maps the codebase before anyone writes a line |
+| No architecture review | Architect designs at file/function level with risk assessment |
+| Tests come last (if at all) | RED-GREEN-REFACTOR — test first, every task, every time |
+| "Looks good" is the review | Two-pass review: spec compliance then code quality |
+| Frontend? Hope it works | Inspector opens a real browser, checks every page, every state |
+| No docs | Writer produces docs that actually match the code |
+| Same model reviews itself | Dedicated reviewer agent with fresh eyes, fresh context |
+
+Crewpilot gives you what a senior engineering team does: research, design, implementation, review, testing, visual QA, and documentation — all in one command.
+
+---
 
 ## Quick Install
 
 ```bash
 git clone https://github.com/Askhz/Crewpilot
-cd Crewpilot
-node scripts/install.mjs
+cd Crewpilot && node scripts/install.mjs
+```
+
+Then in your project:
+
+```bash
+node /path/to/Crewpilot/scripts/init-project.mjs
+```
+
+Restart Claude Code. That's it. No API keys. No external services. Runs entirely within Claude Code.
+
+```bash
+# Full team orchestration
+/crewpilot:run build a user authentication system with login and registration
+
+# Plan first, review the workflow before executing
+/crewpilot:plan add dark mode toggle to settings
 ```
 
 ### Standalone Mode (No Plugin)
 
-Don't want a full plugin? Crewpilot's orchestration rules in `CLAUDE.md` work standalone. Merge them into your project's CLAUDE.md for the agent directory, delegation protocol, and communication rules — without the plugin system:
+Don't want a full plugin? Crewpilot's orchestration rules work standalone:
 
 ```bash
 cat /path/to/Crewpilot/CLAUDE.md >> your-project/CLAUDE.md
 ```
 
-> The `/crewpilot-run` skill won't be available in standalone mode — you'll invoke crewpilot by saying "crewpilot <task>" which the IntentGate routing in CLAUDE.md auto-detects.
-
-### Plugin Install
-
-This registers Crewpilot as a Claude Code plugin and copies the skills and config into `~/.claude/plugins/`. Then in your project:
-
-```bash
-node /path/to/Crewpilot/scripts/init-project.mjs   # creates .crewpilot/ in your project
-```
-
-Restart Claude Code, and you're ready. No API keys to configure, no external services — Crewpilot runs entirely within Claude Code's existing infrastructure.
-
-**Uninstall:**
+### Uninstall
 
 ```bash
 node /path/to/Crewpilot/scripts/uninstall.mjs
 ```
 
-## Usage
+---
 
-Once installed, Crewpilot activates automatically. Just describe your task:
+## What You Get
 
-```bash
-# Full team orchestration
-crewpilot build a user authentication system with login and registration
+**Automatic task classification.** Don't remember commands — just describe what you need. Crewpilot classifies intent and routes accordingly:
 
-# Plan first, review the workflow before executing
-crewpilot-plan add dark mode toggle to settings
+| You say | What happens |
+|---------|-------------|
+| `/crewpilot:run build a login page` | Full team: research → architect → coder → reviewer × 2 → tester → writer |
+| `/crewpilot:run fix the auth bug` | Targeted team: research → architect → coder → tester |
+| `/crewpilot:run build a dashboard UI` | Frontend team: same as above + inspector opens real browser, loops with coder |
+| `/crewpilot:plan review the API changes` | Plan only — pilot presents workflow for your approval, no execution |
+| `/crewpilot:run refactor the database layer` | Refactor team: research → architect → coder → tester → reviewer |
+| `review the API changes` | Auto-detected as code review: researcher → reviewer (spec) ∥ reviewer (quality) |
+| `explain how routing works` | Single agent — no team needed |
+| `list all endpoints` | Direct tool use — no agents at all |
 
-# The pilot classifies intent automatically — you don't need keywords for obvious tasks
-fix the token refresh bug in auth.ts
-review the API error handling
-refactor the database connection pool
-```
+**Right-sized for the task.** Simple change to one file? Crewpilot skips the architect, writer, and extra reviewer. Full-stack feature across 15 files? Every agent you need in the chain. No team-wide mobilization for a typo fix, no solo coder for a production system.
 
-**How intent classification works:**
+**Before anything runs, you approve.** The pilot presents the full workflow plan — which agents, what order, what dependencies — and you confirm or revise. Nothing executes without your sign-off.
 
-| You say | Crewpilot does |
-|---------|---------------|
-| `crewpilot <task>` | Full team orchestration (research → strategize → execute) |
-| `crewpilot-plan <task>` | Generate workflow plan for review, no execution |
-| `build / create / implement ...` | Auto-detected as feature development, triggers full team |
-| `fix / debug / repair ...` | Auto-detected as bug fix, triggers targeted team |
-| `review / check / inspect ...` | Auto-detected as code review |
-| `refactor / optimize ...` | Auto-detected as refactoring |
-| `explain / what / how ...` | Single agent, no team needed |
-| `list / show / find ...` | Direct tool use, no agents |
+**Agents that talk to each other.** The architect asks the researcher for missing context. The coder and tester align on test behavior. The inspector sends ISSUE signals to the coder, coder fixes, inspector re-verifies — continuous loop until every page is clean. The pilot stays out of peer conversations.
 
-**When the team runs**, you'll see the pilot design the workflow, then spawn agents one by one in dependency order — researcher explores the codebase, architect plans the implementation, coder writes the code, reviewer checks it, tester verifies it, and writer documents it. Each agent reports progress and completion. For frontend projects, the inspector uses agent-browser to visually verify every page.
-
-**Frontend projects** need `agent-browser` for the inspector agent:
-
-```bash
-npm install -g agent-browser
-agent-browser install
-```
+---
 
 ## The Team
 
-Crewpilot gives you eight specialized agents. Each has a defined role, tool access, and output contract — no ambiguity, no drift.
+Crewpilot ships with a built-in roster of specialized agents, each with a defined role, tool access, and output contract. **These are a starting point, not a ceiling.** The pilot can create any agent role a task demands — not just the ones listed here. Need a security auditor for a sensitive feature? A database specialist for schema migrations? An API designer for new endpoints? The pilot designs the workflow around the task and creates whatever roles it needs.
 
-| Agent | Role | Tools |
-|-------|------|-------|
-| **pilot** | Team-lead orchestrator + workflow designer, runs the 6-phase lifecycle | TeamCreate, Agent, SendMessage, Task tools |
-| **researcher** | Read-only codebase exploration, gathers context | Read, Glob, Grep, WebSearch, WebFetch |
-| **architect** | Designs implementation plans at file/function level | Read, Glob, Grep — plans only, never edits |
-| **coder** | Implements code changes following the architect's plan | Full tool access, constrained by prompt |
-| **reviewer** | Two-stage review: spec-compliance then code-quality | Read, Grep, Glob — read-only |
-| **tester** | Writes and runs tests for correctness and edge cases | Read, Edit, Write, Bash — test files only |
-| **inspector** | Frontend UI inspection with agent-browser, loops with coder to fix issues | Read, Bash, Glob — agent-browser for inspection, never edits source |
-| **writer** | Documentation, README updates, inline comments | Read, Edit, Write, Glob — docs only |
+| Agent | Role | Key Rule |
+|-------|------|----------|
+| **pilot** | Orchestrator — designs workflow, dispatches teammates, never touches code | Spawn, route, trust |
+| **researcher** | Codebase explorer — finds relevant files, maps dependencies, identifies framework | Read-only, structured report |
+| **architect** | Implementation designer — file/function level plans with risk assessment | YAGNI, no placeholders |
+| **coder** | Implements code — follows architect's plan, self-reviews, reports status | RED-GREEN-REFACTOR |
+| **reviewer** | Two-pass review — spec compliance then code quality, separate tasks | PASS/FAIL with evidence |
+| **tester** | Writes and runs tests — critical paths, edge cases, error scenarios | Test files only |
+| **inspector** | Frontend QA — opens real browser, checks every page, every state | Hard gate: no PASS, no proceed |
+| **writer** | Documentation — README, comments, usage guides | Reads code before writing |
 
-Every agent communicates via a structured signal protocol: PROGRESS for milestones, COMPLETE when done, BLOCKED when stuck. **Teammates can also SendMessage directly to each other by role name** — the architect asks the researcher for missing context, the coder coordinates API contracts with parallel coders, the inspector loops with the coder to fix UI issues. The pilot routes task signals but never relays peer messages; teammates collaborate autonomously.
+Every agent has anti-rationalization Red Flags that counter the specific excuses it's most likely to make. The coder's prompt stops it from "just adding one small improvement." The inspector's prompt stops it from "fixing a small CSS issue myself." Role boundaries are enforced, not suggested.
 
-## How It Works
+**Beyond the built-ins.** The pilot is not limited to these roles. During Phase 1 (Strategize), the pilot analyzes the task and determines exactly which roles are needed — including ones not listed here. Need a security auditor? A database migration specialist? A DevOps engineer to configure CI/CD? The pilot designs the role, writes its prompt, and dispatches it like any other agent. The built-in roster covers the most common engineering workflows; the pilot covers everything else.
 
-### The 6-Phase Pilot Lifecycle
+**Frontend projects** need `agent-browser`:
 
-```
-/crewpilot-run (main session = pilot)
-  ├── Phase 0 (optional): Research — spawn researcher to explore codebase, gather context
-  ├── Phase 1: Strategize — pilot designs the workflow (with research context if available)
-  ├── Phase 1.5 (MANDATORY): User Approval — AskUserQuestion, user approves or revises workflow
-  ├── Phase 2: TeamCreate — register the crew, pilot becomes team-lead
-  ├── Phase 3: Plan — parse strategy table into TaskCreate chains with blocking deps
-  ├── Phase 4: Execute — task-driven loop, spawn ≤5 teammates in parallel
-  │     ├── Agent(team, name="researcher", subagent_type="general-purpose")
-  │     ├── Agent(team, name="architect", subagent_type="Plan")
-  │     ├── Agent(team, name="coder", subagent_type="general-purpose")
-  │     ├── Agent(team, name="reviewer", subagent_type="general-purpose") ×2
-  │     ├── Agent(team, name="tester", subagent_type="general-purpose")
-  │     ├── Agent(team, name="inspector", subagent_type="general-purpose")
-  │     └── Agent(team, name="writer", subagent_type="general-purpose")
-  └── Phase 5: Shutdown — summarize results, shutdown teammates
+```bash
+npm install -g agent-browser && agent-browser install
 ```
 
-Before any team is created, the pilot presents the workflow plan for your approval. If multiple valid approaches exist (e.g., frontend-first vs backend-first), you'll see them as options. Nothing executes until you confirm.
+---
 
-### IntentGate — Automatic Task Classification
+## Core Philosophy
 
-You don't need to remember commands. Crewpilot classifies your intent from what you type and routes accordingly:
+**Task economy, never at the cost of correctness.** Crewpilot doesn't over-assemble for small tasks, and doesn't under-resource complex ones. The pilot picks the right team — and the right roles — for the job. A typo fix gets one agent. A full-stack feature gets the full chain. And when a task needs a role that doesn't exist yet, the pilot creates one.
 
-| You say | Crewpilot classifies as | What happens |
-|---------|------------------------|--------------|
-| "build a login page" | `implement` | research(codebase) → pilot designs workflow → architect → coder → reviewer → tester → writer |
-| "fix the auth bug" | `fix` | research(codebase) → pilot designs workflow → architect → coder → tester |
-| "build a dashboard UI" | `implement` (frontend) | research → pilot designs workflow → architect → coder → inspector (loop) → reviewer → tester → writer |
-| "explain how routing works" | `explain` | single Agent (no team needed) |
-| "review the API changes" | `review` | research → pilot designs workflow → reviewer (spec) → reviewer (quality) |
-| "refactor the database layer" | `refactor` | research → pilot designs workflow → architect → coder → tester → reviewer |
-| "list all endpoints" | `other` | direct tool use |
+**Completeness is cheap, incompleteness is expensive.** The review that catches a bug costs seconds. The test that prevents a regression costs seconds. The doc that saves future-you hours of confusion costs seconds. AI makes the marginal cost of completeness near-zero.
 
-For complex tasks, just include the word `crewpilot` in your prompt to trigger the full team. Use `crewpilot-plan` or `cp-plan` to generate a plan first and review it before executing.
+**Orchestration over execution.** The pilot never touches source code. This isn't a limitation — it's the architecture. Separation of concerns prevents the "solo agent degradation" problem.
 
-### Workflow Patterns
+**Verification is mandatory.** Every agent has a checklist. Every task has a completion signal. Inspector is a hard gate for frontend. Review is two-pass for complex changes. "Looks good" is never a completion criterion.
 
-The pilot adapts the agent chain to the task — no hardcoded pipelines:
-
-**Feature Development** (7 agents, chain)
-```
-researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer
-```
-
-**Feature Development — Frontend** (8 agents, inspector loop)
-```
-researcher → architect → coder → inspector(loop with coder) → reviewer(spec) → reviewer(quality) → tester → writer
-```
-The inspector uses agent-browser to check layout, content, interactions, console errors, and network requests. It sends ISSUE signals to the coder, who fixes and replies, and the inspector re-verifies — looping up to 3 rounds until every issue is resolved.
-
-**Bug Fix** (4 agents, chain, +inspector for UI fixes)
-```
-researcher → architect → coder → tester
-```
-
-**Code Review Only** (3 agents, parallelizable after research)
-```
-researcher → reviewer(spec) ∥ reviewer(quality)
-```
-
-**Refactoring** (5 agents, chain, tester before reviewer)
-```
-researcher → architect → coder → tester → reviewer(quality)
-```
-
-For simple tasks (1-2 files), the pilot skips unnecessary agents — no writer, no separate architect, tester merged into coder. Task economy built in.
-
-## Architecture
-
-The main Claude Code session IS the pilot. This is deliberate: sub-agents (spawned without `team_name`) don't have the `Agent` tool and can't spawn teammates. Only the main session can call `TeamCreate` and spawn teammates via `Agent(team_name, ...)`. The pilot decides if research is needed, designs the workflow, then orchestrates the team.
-
-```
-┌──────────────────────────────────────────────────┐
-│                User Input                         │
-│  "crewpilot add dark mode to settings"           │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│             IntentGate Classification             │
-│       "add" → implement → /crewpilot-run         │
-└──────────────────────┬───────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│              PILOT (Main Session)                 │
-│  ┌─────────────────────────────────────────────┐ │
-│  │ Phase 0 (optional): Agent("researcher")       │ │
-│  │ Phase 1: Pilot designs workflow (+ research)  │ │
-│  │ Phase 2: TeamCreate("crew-dark-mode")        │ │
-│  │ Phase 3: TaskCreate × N (with blockedBy)     │ │
-│  │ Phase 4: Task-driven execution loop          │ │
-│  │ Phase 5: Summarize + shutdown                │ │
-│  └─────────────────────────────────────────────┘ │
-└──────────────────────┬───────────────────────────┘
-                       │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │researcher│ │architect │ │  coder   │
-    │ (Explore)│ │  (Plan)  │ │(general) │
-    └──────────┘ └──────────┘ └──────────┘
-          │            │            │
-          └────────────┼────────────┘
-                       ▼
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │reviewer  │ │reviewer  │ │inspector │
-    │  (spec)  │ │(quality) │ │(general) │
-    └──────────┘ └──────────┘ └────┬─────┘
-                       │           │
-                       ▼           ▼ (loop)
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │  tester  │ │  writer  │ │  coder   │
-    │(general) │ │(general) │ │  (fix)   │
-    └──────────┘ └──────────┘ └──────────┘
-```
+---
 
 ## Project Structure
 
 ```
 Crewpilot/
-├── skills/                    # User-invocable skills
-│   ├── run/
-│   │   ├── SKILL.md           # /crewpilot-run — full orchestration lifecycle
-│   │   └── prompts/           # Agent role prompts (injected at spawn time)
-│   │       ├── researcher.md
-│   │       ├── architect.md
-│   │       ├── coder.md
-│   │       ├── reviewer.md
-│   │       ├── tester.md
-│   │       ├── inspector.md
-│   │       ├── writer.md
-│   │       └── _communication.md  # Shared communication protocol
-│   └── plan/SKILL.md          # /crewpilot-plan — plan preview, no execution
-├── scripts/
-│   ├── install.mjs            # npx crewpilot install
-│   ├── init-project.mjs       # npx crewpilot init
-│   └── uninstall.mjs          # npx crewpilot uninstall
-├── .claude-plugin/            # Claude Code plugin manifest
-│   ├── plugin.json
-│   └── marketplace.json
-├── CLAUDE.md                  # Project instructions (loaded into every session)
-├── package.json
-└── LICENSE
+├── skills/run/SKILL.md              # /crewpilot:run — full orchestration lifecycle
+├── skills/run/prompts/              # Agent role prompts (injected at spawn time)
+│   ├── researcher.md, architect.md
+│   ├── coder.md, reviewer.md, tester.md
+│   ├── inspector.md, writer.md
+│   └── _communication.md           # Shared communication protocol
+├── skills/plan/SKILL.md             # /crewpilot:plan — preview without execution
+├── scripts/                         # install, init-project, uninstall
+├── CLAUDE.md                        # IntentGate routing + agent directory
+└── package.json
 ```
 
-## Configuration
-
-All routing and behavior rules are defined inline in [CLAUDE.md](CLAUDE.md) — IntentGate classification, keyword priority routing, and agent directory. No external config file is needed.
-
-## Design Principles
-
-- **Main session is the pilot.** No wrapping orchestration inside Agent() — the pilot designs workflows and delegates tasks directly.
-- **Research first, strategize second.** The pilot decides if codebase research is needed. If yes, researcher runs first and findings inform workflow design.
-- **Task-driven, not time-driven.** The pilot loops on task status, not timers. Each task has dependencies, owner, and explicit completion signals.
-- **Teammates own their tasks.** The pilot never reads your code to "verify" work. It trusts the COMPLETE signal. Separation of orchestration from execution.
-- **Teammates talk to each other.** Agents SendMessage directly by role name — no relay through the pilot. Architect asks researcher for context, coder⇄tester align on behavior, inspector⇄coder loop to fix UI issues. The pilot stays out of peer conversations.
-- **Task economy.** For simple tasks (1-2 files), the pilot skips unnecessary agents. Don't spawn a team of 8 to change a config value.
-- **YAGNI for agents.** Don't create agents for roles you don't need. The pilot only uses agents from the available directory, creating new ones only when genuinely required.
+---
 
 ## License
 
