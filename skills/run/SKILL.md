@@ -123,11 +123,28 @@ YOU design the workflow. Do NOT spawn another agent for this — you ARE the str
 
 Analyze the task using the research context (if available) and classify it into a scenario. Design the optimal multi-agent workflow with these rules:
 
-- Feature Development: researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer (chain)
-- Bug Fix: researcher → architect → coder → tester (chain, +reviewer if >2 files)
-- Code Review: researcher → reviewer(spec) → reviewer(quality) (parallel after research)
-- Refactoring: researcher → architect → coder → tester → reviewer(quality) (chain)
-- Unknown/Other: researcher → architect → coder → reviewer(spec) (chain, conservative)
+## Execution Mode Selection — Choose BEFORE designing the workflow
+
+Examine the task description and research context to determine the appropriate execution mode:
+
+| Signal | Mode | Agent Chain | When |
+|--------|------|-------------|------|
+| 1-2 files, user gave exact paths, trivial fix | **Quick** | coder → tester | Config changes, typo fixes, single-line bugs |
+| 3-10 files, standard feature, no frontend | **Standard** | researcher → architect → coder → reviewer(spec) → reviewer(quality) → tester → writer | Default for most features |
+| 3-10 files, has frontend (React/Vue/HTML) | **Standard+Frontend** | researcher → architect → coder → inspector(loop) → reviewer(spec) → reviewer(quality) → tester → writer | Any feature with UI |
+| User says "must complete", "don't stop", "critical", "keep going until done" | **Persistent** | Standard chain + PRD-driven verification loop | Core features, security-critical, production systems |
+| 1-5 files, user explicitly said "quick" or "small" | **Quick** | coder → tester | User requested lightweight |
+| >10 files, cross-cutting, multiple subsystems | **Standard** (full chain) | Every role in sequence | Large features, refactors |
+| Purely review/audit, no code changes | **Review** | researcher → reviewer(spec) ∥ reviewer(quality) | Code audit, PR review |
+
+**Team size auto-calculation:**
+- Files affected: <3 → Quick mode → 2 agents / 3-10 → Standard mode → 4-7 agents / >10 → full chain 7-8 agents
+- Has frontend → +1 (inspector), +1 (designer). Has security implications → +1 (security-reviewer)
+- Diff >200 lines after review → +1 (code-simplifier). Unknown root cause → swap coder→tester for debugger→coder→tester
+- User explicitly requested lightweight → force Quick regardless of file count
+- User explicitly requested thorough → force Standard with full chain regardless of file count
+
+Standard patterns (use as templates, adapt based on mode selection):
 
 INSPECTOR MANDATE: If RESEARCH_CONTEXT shows a frontend project, add inspector after coder.
 **HARD GATE:** Once inspector is in the workflow, the workflow CANNOT complete until inspector reports all pages PASS. The inspector does NOT send COMPLETE until every issue is resolved on every page. If issues remain, the inspector sends them to the coder, the coder fixes, and the inspector re-verifies — no round limit. The only exit condition is a clean acceptance report.
@@ -143,6 +160,10 @@ Agent Usage Rules (when to include each agent):
 - **tester**: Use AFTER coder to verify correctness, edge cases, and error paths. Skip when tests already exist and the code change is trivial.
 - **inspector**: Use ONLY for projects with a web frontend (React/Vue/HTML). Requires dev server running. Never use for backend-only projects. **HARD GATE:** When inspector is in the workflow, all downstream agents (reviewer, tester, writer) MUST wait until inspector reports COMPLETE with all pages PASS — not just when the inspector task finishes, but when the acceptance report shows Result: PASS with zero unresolved issues. If the report shows FAIL, the inspector → coder loop continues until clean.
 - **writer**: Use LAST in the workflow — after all code is written, reviewed, and tested. Skip for trivial changes or when the project has no documentation.
+- **security-reviewer**: Use AFTER coder for tasks involving authentication, authorization, user input handling, database queries, API keys, or sensitive data processing. Run BEFORE the spec-compliance reviewer so issues can be fixed before formal review.
+- **code-simplifier**: Use AFTER reviewer(code-quality) PASS for changes >200 lines diff. Scans for dead code, over-abstraction, duplication, and verbosity. Run BEFORE tester so reduced code gets tested.
+- **debugger**: Use INSTEAD of coder→tester chain for complex bug fixes where the root cause is unknown. Replaces coder when the task is "find why X is broken" rather than "implement Y". Debugger diagnoses, then coder fixes.
+- **designer**: Use AFTER architect and BEFORE coder for projects with UI. Review mode validates existing code for design consistency. Design system mode creates a project design doc. Run designer AFTER inspector for visual feedback.
 
 Produce your workflow design:
 
@@ -204,7 +225,7 @@ Loop until all tasks are done:
 2. Read its metadata.role → map to subagent_type:
    - researcher → general-purpose
    - architect → Plan
-   - coder/reviewer/tester/inspector/writer → general-purpose
+   - coder/reviewer/tester/inspector/writer/security-reviewer/code-simplifier/debugger/designer → general-purpose
 3. TaskUpdate(taskId, status: "in_progress", owner: "<role_name>")
 4. **Build the prompt**: Read TWO files from the plugin's prompts directory:
    - Read `{CLAUDE_PLUGIN_ROOT}/skills/run/prompts/<role_name>.md` — role-specific instructions
@@ -239,6 +260,22 @@ Loop until all tasks are done:
 8. Repeat from step 1
 
 The role prompt and communication protocol are MANDATORY. They give the teammate its identity, constraints, and signaling protocol. Without them, teammates won't know how to behave or how to report completion.
+
+**Deliverable contract verification:** Before marking a task completed, verify the output structure matches the expected format. If the format is incomplete, respond to the agent with "Missing: <section>" and wait for a corrected output. Do NOT mark the task complete until the deliverable contract is satisfied.
+
+| Role | Expected in output |
+|------|-------------------|
+| researcher | "## Research Report" with "Project Type:", "Frontend Framework:", "Relevant Files", "Key Findings (with file:line)", "Dependencies", "Points of Attention" |
+| architect | "## Implementation Plan" with "Overview", "File Structure", "Task Breakdown", "Interface Design", "Data Flow", "Risk Assessment", "Implementation Order" |
+| coder | "## <Role> Complete" with "Summary", "What Was Done", valid status code (COMPLETE/DONE_WITH_CONCERNS/NEEDS_CONTEXT/BLOCKED), commit SHA if changes made |
+| reviewer | "## Review Report — {spec-compliance\|code-quality}" with "Summary: **PASS** / **FAIL**", "Details" table (Severity, Location, Issue, Explanation) |
+| tester | Test count, pass/fail counts, list of test files created/modified, confirmation "All tests pass" or specific failures |
+| inspector | "# Acceptance Report" with "Result: PASS / FAIL", "Per-Page Results" table (6 columns), "Unresolved Issues" section (even if "None") |
+| writer | List of documentation files created/modified with brief description of each change |
+| security-reviewer | "## Security Audit Report" with "Summary: **PASS** / **FAIL**", "Findings" table (Severity, Category, Location, Vulnerability, Remediation), "Risk Assessment" |
+| code-simplifier | "## Simplification Report" with "Summary: X lines removed, Y files changed", "Changes" list (File, Lines removed, What, Why), "Tests: all passing / N failures" |
+| debugger | "## Debugging Report" with "Bug Summary", "Reproduction" (steps + test), "Root Cause" (file:line), "Prescribed Fix" (what + why), "Confidence: high/medium/low" |
+| designer | "## Design Review Report" with "Summary: **PASS** / **FAIL** with N issues", "Dimension Scores" table (5 dimensions × /10), "Issues" table |
 
 On failure: check the teammate's status signal first:
   - NEEDS_CONTEXT → provide missing context, re-dispatch same agent (not a failure)

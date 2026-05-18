@@ -114,6 +114,10 @@ Crewpilot ships with a built-in roster of specialized agents, each with a define
 | **tester** | Writes and runs tests — critical paths, edge cases, error scenarios | Test files only |
 | **inspector** | Frontend QA — opens real browser, checks every page, every state | Hard gate: no PASS, no proceed |
 | **writer** | Documentation — README, comments, usage guides | Reads code before writing |
+| **security-reviewer** | OWASP Top 10 security audit — injection, auth, XSS, secrets | CRITICAL findings block ship |
+| **code-simplifier** | Reduce code without reducing function — dead code, abstraction, duplication | Every line removed is a future bug prevented |
+| **debugger** | 4-phase root cause analysis — reproduce, isolate, diagnose, prescribe | No fix without evidence |
+| **designer** | UI/UX design review — consistency, interaction, responsive, accessibility | 5 dimensions scored 0-10 |
 
 Every agent has anti-rationalization Red Flags that counter the specific excuses it's most likely to make. The coder's prompt stops it from "just adding one small improvement." The inspector's prompt stops it from "fixing a small CSS issue myself." Role boundaries are enforced, not suggested.
 

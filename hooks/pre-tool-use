@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# PreToolUse hook for crewpilot plugin
+# Warns before destructive shell commands.
+set -euo pipefail
+
+INPUT=$(cat)
+
+COMMAND=$(echo "$INPUT" | node -e "
+  let d='';
+  process.stdin.on('data',c=>d+=c);
+  process.stdin.on('end',()=>{
+    try{
+      const j=JSON.parse(d);
+      let cmd = j.tool_input?.command || j.command || '';
+      console.log(cmd);
+    }catch(e){console.log('');}
+  });
+" 2>/dev/null)
+
+if [ -z "$COMMAND" ]; then
+  exit 0
+fi
+
+DESTRUCTIVE=0
+REASON=""
+
+if echo "$COMMAND" | grep -qE '\brm\s+-rf?\b' && ! echo "$COMMAND" | grep -qE '(node_modules|\.next|dist|__pycache__|\.cache|build|\.turbo|coverage|\.git/)'; then
+  DESTRUCTIVE=1
+  REASON="Recursive file deletion"
+fi
+
+if echo "$COMMAND" | grep -qE 'git\s+push\s+.*(-f|--force)' && echo "$COMMAND" | grep -qE '\b(main|master)\b'; then
+  DESTRUCTIVE=1
+  REASON="$REASON${REASON:+, }Force push to main/master"
+fi
+
+if echo "$COMMAND" | grep -qE 'git\s+reset\s+--hard'; then
+  DESTRUCTIVE=1
+  REASON="$REASON${REASON:+, }Git hard reset — uncommitted work will be lost"
+fi
+
+if echo "$COMMAND" | grep -qE '\b(DROP\s+(TABLE|DATABASE)|TRUNCATE)\b'; then
+  DESTRUCTIVE=1
+  REASON="$REASON${REASON:+, }Database destructive operation"
+fi
+
+if [ "$DESTRUCTIVE" = "1" ]; then
+  printf '{"permissionDecision":"warn","warningMessage":"\\u26a0\\ufe0f  Crewpilot: %s\\nCommand: %s\\n\\nThis may be destructive. Proceed only if you are sure.","systemMessage":"Crewpilot guard: %s"}\n' "$REASON" "$(echo "$COMMAND" | head -c 200)" "$REASON"
+fi
+
+exit 0

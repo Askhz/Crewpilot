@@ -68,5 +68,9 @@ The pilot NEVER reads source code, searches the project, runs commands, writes f
 | tester | general-purpose | Write and run tests |
 | inspector | general-purpose | Frontend UI inspection with agent-browser, loops with coder to fix issues |
 | writer | general-purpose | Documentation updates |
+| security-reviewer | general-purpose | OWASP Top 10 + STRIDE security audit, vulnerability detection |
+| code-simplifier | general-purpose | Reduce code without reducing functionality — dead code, over-abstraction, duplication |
+| debugger | general-purpose | 4-phase root cause analysis — reproduce, isolate, diagnose, prescribe. No fixes, diagnosis only |
+| designer | general-purpose | UI/UX design review — visual consistency, interaction, responsive, accessibility, states |
 
 > *pilot* is the main session — NOT a spawned agent. All other agents are spawned as teammates via `Agent(team_name, name, subagent_type, prompt)`. The pilot designs the workflow dynamically per task.
